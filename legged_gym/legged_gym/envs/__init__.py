@@ -38,3 +38,6 @@ import os
 from legged_gym.utils.task_registry import task_registry
 
 task_registry.register( "29", LeggedRobot, G129Cfg(), G129CfgPPO() )
+
+from .k1.k1_config import K1Cfg, K1CfgPPO
+task_registry.register( "k1", LeggedRobot, K1Cfg(), K1CfgPPO() )

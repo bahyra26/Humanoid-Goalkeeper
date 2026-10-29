@@ -57,7 +57,7 @@ def play(args):
     
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     env_cfg.env.num_envs =  6
-    env_cfg.env.episode_length_s = 3
+    env_cfg.env.episode_length_s = 8
     env_cfg.env.play = True
     env_cfg.noise.add_noise = False
 
@@ -72,6 +72,11 @@ def play(args):
     env: LeggedRobot
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
     obs = env.get_observations()
+
+    if env.viewer is not None:
+        camera_pos = gymapi.Vec3(3.0, 2.2, 1.4)
+        camera_target = gymapi.Vec3(0.0, 0.0, 0.8)
+        env.gym.viewer_camera_look_at(env.viewer, None, camera_pos, camera_target)
 
 
     # load policy
@@ -102,4 +107,7 @@ def play(args):
 if __name__ == '__main__':
     EXPORT_POLICY = True
     args = get_args()
+    if args.exptid is None:
+        args.exptid = 'goalkeeper'
+    args.headless = False
     play(args)
