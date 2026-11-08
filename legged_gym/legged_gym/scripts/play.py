@@ -42,6 +42,8 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from time import time, sleep
 
+EXPORT_POLICY = False
+
 def get_load_path(root, load_run=-1, checkpoint=-1, model_name_include="model"):
     if checkpoint==-1:
         models = [file for file in os.listdir(root) if model_name_include in file]
@@ -56,26 +58,49 @@ def play(args):
     
     
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
-    env_cfg.env.num_envs =  6
-    env_cfg.env.episode_length_s = 8
+    env_cfg.env.num_envs = 6 if getattr(args, 'num_envs', None) is None else args.num_envs
+    env_cfg.sim.physx.max_gpu_contact_pairs = 2**17
+    env_cfg.sim.physx.default_buffer_size_multiplier = 1
+    env_cfg.env.episode_length_s = 1.8 if args.task == 'k1' else 8
     env_cfg.env.play = True
     env_cfg.noise.add_noise = False
 
+    if getattr(args, 'region', None) is not None:
+        env_cfg.commands.custom_region = args.region
+        print(f"[CUSTOM BALL TARGET] Target wilayah gawang dipaksa ke Region {args.region}")
+    if getattr(args, 'target_y', None) is not None:
+        env_cfg.commands.custom_target_y = args.target_y
+        print(f"[CUSTOM BALL TARGET] Koordinat horizontal (Y) diset: {args.target_y} m")
+    if getattr(args, 'target_z', None) is not None:
+        env_cfg.commands.custom_target_z = args.target_z
+        print(f"[CUSTOM BALL TARGET] Ketinggian bola (Z) diset: {args.target_z} m")
+    if getattr(args, 'flight_time', None) is not None:
+        env_cfg.commands.custom_flight_time = args.flight_time
+        print(f"[CUSTOM BALL TARGET] Durasi meluncur (flight_time) diset: {args.flight_time} detik")
+
     env_cfg.domain_rand.randomize_initial_joint_pos = False
+    env_cfg.domain_rand.continue_keep = False
     env_cfg.domain_rand.randomize_friction = True
     env_cfg.domain_rand.push_robots = False
     env_cfg.domain_rand.push_interval_s = 6
-    env_cfg.domain_rand.randomize_base_mass = False
-    env_cfg.domain_rand.randomize_base_com = False
+    env_cfg.domain_rand.randomize_payload_mass = False
+    env_cfg.domain_rand.randomize_com_displacement = False
+    env_cfg.domain_rand.randomize_link_mass = False
 
     # prepare environment
     env: LeggedRobot
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
+    env.reset_idx(torch.arange(env.num_envs, device=env.device))
+    env.compute_observations()
     obs = env.get_observations()
 
     if env.viewer is not None:
-        camera_pos = gymapi.Vec3(3.0, 2.2, 1.4)
-        camera_target = gymapi.Vec3(0.0, 0.0, 0.8)
+        if args.task == 'k1':
+            camera_pos = gymapi.Vec3(2.5, 1.8, 1.0)
+            camera_target = gymapi.Vec3(0.0, 0.0, 0.45)
+        else:
+            camera_pos = gymapi.Vec3(3.0, 2.2, 1.4)
+            camera_target = gymapi.Vec3(0.0, 0.0, 0.8)
         env.gym.viewer_camera_look_at(env.viewer, None, camera_pos, camera_target)
 
 
@@ -103,6 +128,8 @@ def play(args):
 
         actions = policy(obs.detach())
         obs, privileged_obs, rews, dones, infos, _, _ = env.step(actions.detach())
+        if not args.headless:
+            sleep(env.dt)
 
 if __name__ == '__main__':
     EXPORT_POLICY = True

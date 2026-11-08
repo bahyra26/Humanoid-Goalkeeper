@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
+import sys
 from legged_gym import LEGGED_GYM_ROOT_DIR
 import numpy as np
 import os
@@ -35,17 +36,33 @@ from datetime import datetime
 import isaacgym
 from legged_gym.envs import *
 from legged_gym.utils import get_args, task_registry
+from isaacgym import gymapi
 import torch
 
-def train(args, headless=True):
-    args.headless = headless
+def train(args):
     env, env_cfg = task_registry.make_env(name=args.task, args=args)
 
+    if env.viewer is not None:
+        if args.task == 'k1':
+            camera_pos = gymapi.Vec3(3.0, 2.0, 1.2)
+            camera_target = gymapi.Vec3(0.0, 0.0, 0.5)
+        else:
+            camera_pos = gymapi.Vec3(4.0, 3.0, 1.8)
+            camera_target = gymapi.Vec3(0.0, 0.0, 0.8)
+        env.gym.viewer_camera_look_at(env.viewer, None, camera_pos, camera_target)
+
     save_path = os.path.join(LEGGED_GYM_ROOT_DIR)
-    ppo_runner, train_cfg = task_registry.make_alg_runner(env=env, name=args.task, args=args,log_root = save_path)
+    ppo_runner, train_cfg = task_registry.make_alg_runner(env=env, name=args.task, args=args, log_root=save_path)
 
     ppo_runner.learn(num_learning_iterations=train_cfg.runner.max_iterations, init_at_random_ep_len=True)
 
 if __name__ == '__main__':
     args = get_args()
+    if args.exptid is None:
+        args.exptid = 'goalkeeper'
+
+    # Jika pengguna menambahkan opsi --gui, buka jendela tampilan 3D
+    if '--gui' in sys.argv:
+        args.headless = False
+
     train(args)

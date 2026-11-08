@@ -82,8 +82,12 @@ class HIMOnPolicyRunner:
 
         self.amp_cfg = train_cfg["amp"]
         self.amp_coef = self.amp_cfg['amp_coef']
-        amp = AMP(self.amp_cfg['num_obs'], self.amp_cfg['amp_coef'], device=self.device).to(self.device)
-        amp_normalizer = Normalizer(self.amp_cfg['num_obs'])
+        if self.amp_coef > 0:
+            amp = AMP(self.amp_cfg['num_obs'], self.amp_cfg['amp_coef'], device=self.device).to(self.device)
+            amp_normalizer = Normalizer(self.amp_cfg['num_obs'])
+        else:
+            amp = None
+            amp_normalizer = None
 
 
         alg_class = eval(self.cfg["algorithm_class_name"]) # HIMPPO
@@ -126,7 +130,7 @@ class HIMOnPolicyRunner:
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
         obs = self.env.get_observations()
-        amp_state = self.env.get_amp_observations().to(self.device)
+        amp_state = self.env.get_amp_observations().to(self.device) if self.amp_coef > 0 else None
         privileged_obs = self.env.get_privileged_observations()
         critic_obs = privileged_obs if privileged_obs is not None else obs
         obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
@@ -144,91 +148,99 @@ class HIMOnPolicyRunner:
 
         start_iter = self.current_learning_iteration
         tot_iter = start_iter + num_learning_iterations
-        for it in range(start_iter, tot_iter):
-            start = time.time()
-            # Rollout
-            with torch.inference_mode():
-                for i in range(self.num_steps_per_env):
-                    actions = self.alg.act(obs, critic_obs)
-                    old_amp_state = amp_state
-                    obs, privileged_obs, raw_rewards, dones, infos, termination_ids, termination_privileged_obs = self.env.step(actions)
+        try:
+            for it in range(start_iter, tot_iter):
+                start = time.time()
+                # Rollout
+                with torch.inference_mode():
+                    for i in range(self.num_steps_per_env):
+                        actions = self.alg.act(obs, critic_obs)
+                        old_amp_state = amp_state
+                        obs, privileged_obs, raw_rewards, dones, infos, termination_ids, termination_privileged_obs = self.env.step(actions)
 
-                    critic_obs = privileged_obs if privileged_obs is not None else obs
-                    obs, critic_obs, raw_rewards, dones = obs.to(self.device), critic_obs.to(self.device), raw_rewards.to(self.device), dones.to(self.device)
-                    termination_ids = termination_ids.to(self.device)
-                    termination_privileged_obs = termination_privileged_obs.to(self.device)
+                        critic_obs = privileged_obs if privileged_obs is not None else obs
+                        obs, critic_obs, raw_rewards, dones = obs.to(self.device), critic_obs.to(self.device), raw_rewards.to(self.device), dones.to(self.device)
+                        termination_ids = termination_ids.to(self.device)
+                        termination_privileged_obs = termination_privileged_obs.to(self.device)
 
-                    amp_state = self.env.get_amp_observations().to(self.device)
-                    amp_state_ = torch.cat([old_amp_state, amp_state], dim=1).to(self.device)
-                    self.alg.process_amp_state(amp_state_)
+                        num_envs = obs.shape[0]
+                        amp_reward = torch.zeros(num_envs, device=obs.device)
 
-                    num_envs = obs.shape[0]
-                    amp_reward = torch.zeros(num_envs, device=obs.device)
+                        if self.amp_coef > 0:
+                            amp_state = self.env.get_amp_observations().to(self.device)
+                            amp_state_ = torch.cat([old_amp_state, amp_state], dim=1).to(self.device)
+                            self.alg.process_amp_state(amp_state_)
 
-                    motion_ids = 3 * critic_obs[:,self.alg.actor_critic.num_one_step_obs + 3]
-                    for motion_key, motion_val in zip(
-                        ["lefthand", "righthand", "leftjump", "rightjump", "leftstep", "rightstep"],
-                        [0, 1, 2, 3, 4, 5]
-                    ):
-                        mask = motion_ids == motion_val
-                        if mask.any():
-                            rew = self.alg.amp[motion_key].predict_reward(
-                                amp_state_[mask], normalizer=self.alg.amp_normalizer
-                            ).squeeze(1) * 0.5
-                            amp_reward[mask] = rew
+                            motion_ids = 3 * critic_obs[:,self.alg.actor_critic.num_one_step_obs + 3]
+                            for motion_key, motion_val in zip(
+                                ["lefthand", "righthand", "leftjump", "rightjump", "leftstep", "rightstep"],
+                                [0, 1, 2, 3, 4, 5]
+                            ):
+                                mask = motion_ids == motion_val
+                                if mask.any():
+                                    rew = self.alg.amp[motion_key].predict_reward(
+                                        amp_state_[mask], normalizer=self.alg.amp_normalizer
+                                    ).squeeze(1) * 0.5
+                                    amp_reward[mask] = rew
+                        
+     
+
+                        next_critic_obs = critic_obs.clone().detach()
+                        next_critic_obs[termination_ids] = termination_privileged_obs.clone().detach()
+
+                        rewards = amp_reward * self.amp_coef + raw_rewards * (1 - self.amp_coef)
+                        # rewards = amp_reward * self.amp_coef + raw_rewards
+                        
+                        self.alg.process_env_step(rewards, dones, infos, next_critic_obs)
                     
- 
+                        if self.log_dir is not None:
+                            # Book keeping
+                            if 'episode' in infos:
+                                ep_infos.append(infos['episode'])
+                            cur_reward_sum += rewards
+                            cur_raw_reward_sum += raw_rewards
+                            cur_amp_reward_sum += amp_reward
+                            cur_episode_length += 1
+                            new_ids = (dones > 0).nonzero(as_tuple=False)
+                            rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                            raw_rewbuffer.extend(cur_raw_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                            amp_rewbuffer.extend(cur_amp_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                            lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
+                            cur_reward_sum[new_ids] = 0
+                            cur_raw_reward_sum[new_ids] = 0
+                            cur_amp_reward_sum[new_ids] = 0
+                            cur_episode_length[new_ids] = 0
 
-                    next_critic_obs = critic_obs.clone().detach()
-                    next_critic_obs[termination_ids] = termination_privileged_obs.clone().detach()
+                    stop = time.time()
+                    collection_time = stop - start
 
-                    rewards = amp_reward * self.amp_coef + raw_rewards * (1 - self.amp_coef)
-                    # rewards = amp_reward * self.amp_coef + raw_rewards
-                    
-                    self.alg.process_env_step(rewards, dones, infos, next_critic_obs)
-                
-                    if self.log_dir is not None:
-                        # Book keeping
-                        if 'episode' in infos:
-                            ep_infos.append(infos['episode'])
-                        cur_reward_sum += rewards
-                        cur_raw_reward_sum += raw_rewards
-                        cur_amp_reward_sum += amp_reward
-                        cur_episode_length += 1
-                        new_ids = (dones > 0).nonzero(as_tuple=False)
-                        rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                        raw_rewbuffer.extend(cur_raw_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                        amp_rewbuffer.extend(cur_amp_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                        lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
-                        cur_reward_sum[new_ids] = 0
-                        cur_raw_reward_sum[new_ids] = 0
-                        cur_amp_reward_sum[new_ids] = 0
-                        cur_episode_length[new_ids] = 0
+                    # Learning step
+                    start = stop
+                    self.alg.compute_returns(critic_obs)
 
+                mean_value_loss, mean_surrogate_loss, mean_est_loss, mean_region_loss, amp_loss, expert_loss, policy_loss = self.alg.update()
                 stop = time.time()
-                collection_time = stop - start
-
-                # Learning step
-                start = stop
-                self.alg.compute_returns(critic_obs)
-
-            mean_value_loss, mean_surrogate_loss, mean_est_loss, mean_region_loss, amp_loss, expert_loss, policy_loss = self.alg.update()
-            stop = time.time()
-            learn_time = stop - start
+                learn_time = stop - start
+                if self.log_dir is not None:
+                    self.log(locals())
+                if it % self.save_interval == 0:
+                    self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(it)))
+                ep_infos.clear()
+                if it == start_iter:
+                    # obtain all the diff files
+                    git_file_paths = store_code_state(self.log_dir, self.git_status_repos)
+                    # if possible store them to wandb
+                    if self.logger_type == "wandb" and git_file_paths:
+                        for path in git_file_paths:
+                            self.writer.save_file(path)
+                self.current_learning_iteration = it
+        except KeyboardInterrupt:
             if self.log_dir is not None:
-                self.log(locals())
-            if it % self.save_interval == 0:
-                self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(it)))
-            ep_infos.clear()
-            if it == start_iter:
-                # obtain all the diff files
-                git_file_paths = store_code_state(self.log_dir, self.git_status_repos)
-                # if possible store them to wandb
-                if self.logger_type == "wandb" and git_file_paths:
-                    for path in git_file_paths:
-                        self.writer.save_file(path)
-            self.current_learning_iteration = it
-        
+                ckpt_path = os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration))
+                print(f"\n[Auto-Save] Ctrl+C terdeteksi! Menyimpan checkpoint terakhir ke: {ckpt_path}")
+                self.save(ckpt_path)
+            return
+
         self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
 
     def log(self, locs, width=80, pad=35):
@@ -250,7 +262,7 @@ class HIMOnPolicyRunner:
                 value = torch.mean(infotensor)
                 self.writer.add_scalar('Episode/' + key, value, locs['it'])
                 ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.4f}\n"""
-        mean_std = self.alg.actor_critic.std[0:10].mean()
+        mean_std = self.alg.actor_critic.std.mean()
         fps = int(self.num_steps_per_env * self.env.num_envs / (locs['collection_time'] + locs['learn_time']))
 
         self.writer.add_scalar('Loss/value_function', locs['mean_value_loss'], locs['it'])
@@ -330,7 +342,7 @@ class HIMOnPolicyRunner:
                 value = torch.mean(infotensor)
                 self.writer.add_scalar('Episode/' + key, value, locs['it'])
                 ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.4f}\n"""
-        mean_std = self.alg.actor_critic.std[0:10].mean()
+        mean_std = self.alg.actor_critic.std.mean()
         fps = int(self.num_steps_per_env * self.env.num_envs / (locs['collection_time'] + locs['learn_time']))
 
         self.writer.add_scalar('Loss/action_loss, ', locs['action_loss'], locs['it'])
@@ -393,8 +405,11 @@ class HIMOnPolicyRunner:
         loaded_dict = torch.load(path, map_location=self.device)
         self.alg.actor_critic.load_state_dict(loaded_dict['model_state_dict'])
 
-        if load_optimizer:
-            self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
+        if load_optimizer and 'optimizer_state_dict' in loaded_dict:
+            try:
+                self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
+            except ValueError as e:
+                warnings.warn(f"Skipping full optimizer state load due to parameter group mismatch: {e}")
         self.current_learning_iteration = loaded_dict['iter']
         return loaded_dict['infos']
 

@@ -87,32 +87,37 @@ class HIMPPO:
         self.smoothness_lower_bound = smoothness_lower_bound
 
         # amp
-        self.amp = {
-            "lefthand": deepcopy(amp),
-            "righthand": deepcopy(amp),
-            "leftjump": deepcopy(amp),
-            "rightjump": deepcopy(amp),
-            "leftstep": deepcopy(amp),
-            "rightstep": deepcopy(amp)
-        }
+        self.amp_coef = amp.amp_coef if amp is not None else 0.0
+        if amp is not None and self.amp_coef > 0:
+            self.amp = {
+                "lefthand": deepcopy(amp),
+                "righthand": deepcopy(amp),
+                "leftjump": deepcopy(amp),
+                "rightjump": deepcopy(amp),
+                "leftstep": deepcopy(amp),
+                "rightstep": deepcopy(amp)
+            }
+            for model in self.amp.values():
+                model.to(self.device)
+        else:
+            self.amp = None
 
-        for model in self.amp.values():
-            model.to(self.device)
         params = [
             {'params': self.actor_critic.parameters(), 'name': 'actor_critic'},
         ]
 
-        for key in self.amp:
-            params.append({
-                'params': self.amp[key].trunk.parameters(),
-                'weight_decay': 10e-4,
-                'name': f'amp_trunk_{key}'
-            })
-            params.append({
-                'params': self.amp[key].amp_linear.parameters(),
-                'weight_decay': 10e-2,
-                'name': f'amp_head_{key}'
-            })
+        if self.amp is not None:
+            for key in self.amp:
+                params.append({
+                    'params': self.amp[key].trunk.parameters(),
+                    'weight_decay': 10e-4,
+                    'name': f'amp_trunk_{key}'
+                })
+                params.append({
+                    'params': self.amp[key].amp_linear.parameters(),
+                    'weight_decay': 10e-2,
+                    'name': f'amp_head_{key}'
+                })
         self.optimizer = optim.Adam(params, lr=learning_rate)
         self.amp_normalizer = amp_normalizer
         self.motion_buffer = motion_buffer
@@ -175,6 +180,7 @@ class HIMPPO:
         mean_surrogate_loss = 0
         mean_est_loss = 0
         mean_region_loss = 0
+        amp_loss, expert_loss, policy_loss = 0.0, 0.0, 0.0
 
         generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
 
@@ -242,7 +248,7 @@ class HIMPPO:
                 loss += smooth_loss
 
                 # amp loss
-                if self.amp is not None:
+                if self.amp is not None and self.amp_coef > 0:
                     # import ipdb; ipdb.set_trace()
 
                     motion_ids = 3 * critic_obs_batch[:,self.actor_critic.num_one_step_obs + 3]

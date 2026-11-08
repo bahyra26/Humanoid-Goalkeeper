@@ -217,20 +217,31 @@ def get_args():
         {"name": "--exptid", "type": str, "help": "exptid"},
         {"name": "--resumeid", "type": str, "help": "exptid"},
         {"name": "--headless", "action": "store_true", "default": True, "help": "Force display off at all times"},
+        {"name": "--gui", "action": "store_true", "default": False, "help": "Show visual GUI 3D display window"},
         {"name": "--horovod", "action": "store_true", "default": False, "help": "Use horovod for multi-gpu training"},
         {"name": "--rl_device", "type": str, "default": "cuda:0", "help": 'Device used by the RL algorithm, (cpu, gpu, cuda:0, cuda:1 etc..)'},
         {"name": "--num_envs", "type": int, "help": "Number of environments to create. Overrides config file if provided."},
         {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
         {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
+        {"name": "--region", "type": int, "default": None, "help": "Force all envs to aim at a specific region (0: Mid-L, 1: Mid-R, 2: High-L, 3: High-R, 4: Low-L, 5: Low-R)"},
+        {"name": "--target_y", "type": float, "default": None, "help": "Custom horizontal target coordinate on goal line (Y: -1.3m right post to +1.3m left post)"},
+        {"name": "--target_z", "type": float, "default": None, "help": "Custom vertical target coordinate on goal line (Z: 0.1m ground to 1.2m crossbar)"},
+        {"name": "--flight_time", "type": float, "default": None, "help": "Custom ball flight duration in seconds (e.g. 0.5 for fast shot, 1.0 for slow shot)"},
     ]
     # parse arguments
     args = gymutil.parse_arguments(
         description="RL Policy",
         custom_parameters=custom_parameters)
 
+    if args.gui:
+        args.headless = False
+
     # name allignment
     # args.sim_device_id = args.compute_device_id
     args.sim_device = args.rl_device
+    if args.sim_device == 'cpu':
+        args.use_gpu = False
+        args.use_gpu_pipeline = False
     # if args.sim_device=='cuda':
     #     args.sim_device += f":{args.sim_device_id}"
     return args
@@ -243,11 +254,11 @@ def export_policy_as_jit(actor_critic, path, policy_name):
     traced_script_module.save(path)
         
 def load_onnx_policy(path):
-    model = ort.InferenceSession(path)
+    model = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
     def run_inference(input_tensor):
         ort_inputs = {model.get_inputs()[0].name: input_tensor.cpu().numpy()}
         ort_outs = model.run(None, ort_inputs)
-        return torch.tensor(ort_outs[0], device="cuda:0")
+        return torch.tensor(ort_outs[0], device=input_tensor.device)
     return run_inference
 
 def export_jit_to_onnx(jit_model, path, dummy_input):

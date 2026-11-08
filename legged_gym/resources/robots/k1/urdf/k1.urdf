@@ -172,7 +172,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/Head_2.STL" />
+          filename="../meshes/Head_2_Collision.STL" />
       </geometry>
     </collision>
   </link>
@@ -421,6 +421,12 @@
       velocity="33.51"
     />
   </joint>
+  <link name="left_hand_link" />
+  <joint name="left_hand_joint" type="fixed">
+    <origin xyz="0 0.20 0" rpy="0 0 0" />
+    <parent link="left_elbow_yaw_link" />
+    <child link="left_hand_link" />
+  </joint>
 
   <link
     name="aaright_shoulder_pitch_link">
@@ -647,6 +653,12 @@
       effort="14.0"
       velocity="33.51"
     />
+  </joint>
+  <link name="right_hand_link" />
+  <joint name="right_hand_joint" type="fixed">
+    <origin xyz="0 -0.20 0" rpy="0 0 0" />
+    <parent link="right_elbow_yaw_link" />
+    <child link="right_hand_link" />
   </joint>
 
   <link
@@ -967,7 +979,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/Left_Foot.STL" />
+          filename="../meshes/Left_Foot_Collision.STL" />
       </geometry>
     </collision>
   </link>
@@ -1309,7 +1321,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/Right_Foot.STL" />
+          filename="../meshes/Right_Foot_Collision.STL" />
       </geometry>
     </collision>
   </link>
