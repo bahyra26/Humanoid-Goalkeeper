@@ -110,6 +110,16 @@ class MotionLib:
         for i, traj in enumerate(tqdm(datasets)):
             start, end = self.motion_start_ids[i], self.motion_end_ids[i]
 
+            dof_pos = torch.as_tensor(traj["joint_position"], dtype=torch.float, device=device)
+            dof_vel = torch.as_tensor(traj["joint_velocity"], dtype=torch.float, device=device)
+            for j, name in enumerate(dof_names):
+                if name in mapping.keys():
+                    self.motion_dof_pos[start:end, j] = dof_pos[:, mapping[name]]
+                    self.motion_dof_vel[start:end, j] = dof_vel[:, mapping[name]]
+
+            if not keyframe_names and amp_obs_type == 'dof':
+                continue
+
             self.motion_base_pos[start:end] = torch.tensor(traj["base_position"], dtype=torch.float, device=device)
             #! Note: Quat to RPY, not sure the correctness
             self.motion_base_rpy[start:end] = torch.tensor(euler_from_quaternion(traj["base_pose"]), dtype=torch.float, device=device)   
@@ -118,13 +128,6 @@ class MotionLib:
             self.motion_base_lin_vel[end-1:end] = self.motion_base_lin_vel[end-2:end-1]
             self.motion_base_ang_vel[end-1:end] = self.motion_base_ang_vel[end-2:end-1]
             
-            dof_pos = torch.tensor(traj["joint_position"], dtype=torch.float, device=device)
-            dof_vel = torch.tensor(traj["joint_velocity"], dtype=torch.float, device=device)
-            for j, name in enumerate(dof_names):
-                if name in mapping.keys():
-                    self.motion_dof_pos[start:end, j] = dof_pos[:, mapping[name]]
-                    self.motion_dof_vel[start:end, j] = dof_vel[:, mapping[name]]
-
             for k, name in enumerate(keyframe_names):
                 # import ipdb; ipdb.set_trace()
                 self.motion_keyframe_pos[start:end, k] = torch.tensor(traj["link_position"][:, k], dtype=torch.float, device=device)

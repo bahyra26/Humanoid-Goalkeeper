@@ -1,0 +1,345 @@
+{
+  "recfix_5400_vs_landfix_5350_all": {
+    "n": 4312,
+    "a_saves": 1958,
+    "b_saves": 2076,
+    "a_pct": 45.41,
+    "b_pct": 48.14,
+    "delta_saves": -118,
+    "delta_pp": -2.74,
+    "ci95_pp": [
+      -3.94,
+      -1.53
+    ],
+    "a_only": 292,
+    "b_only": 410,
+    "ties": 3610
+  },
+  "recfix_5400_vs_nocollide_5200_all": {
+    "n": 4312,
+    "a_saves": 1958,
+    "b_saves": 2008,
+    "a_pct": 45.41,
+    "b_pct": 46.57,
+    "delta_saves": -50,
+    "delta_pp": -1.16,
+    "ci95_pp": [
+      -2.47,
+      0.15
+    ],
+    "a_only": 392,
+    "b_only": 442,
+    "ties": 3478
+  },
+  "recfix_5400_vs_v9_5000_all": {
+    "n": 4312,
+    "a_saves": 1958,
+    "b_saves": 1931,
+    "a_pct": 45.41,
+    "b_pct": 44.78,
+    "delta_saves": 27,
+    "delta_pp": 0.63,
+    "ci95_pp": [
+      -0.66,
+      1.92
+    ],
+    "a_only": 416,
+    "b_only": 389,
+    "ties": 3507
+  },
+  "recfix_5600_vs_landfix_5350_all": {
+    "n": 4312,
+    "a_saves": 2077,
+    "b_saves": 2076,
+    "a_pct": 48.17,
+    "b_pct": 48.14,
+    "delta_saves": 1,
+    "delta_pp": 0.02,
+    "ci95_pp": [
+      -1.21,
+      1.26
+    ],
+    "a_only": 370,
+    "b_only": 369,
+    "ties": 3573
+  },
+  "recfix_5600_vs_nocollide_5200_all": {
+    "n": 4312,
+    "a_saves": 2077,
+    "b_saves": 2008,
+    "a_pct": 48.17,
+    "b_pct": 46.57,
+    "delta_saves": 69,
+    "delta_pp": 1.6,
+    "ci95_pp": [
+      0.28,
+      2.92
+    ],
+    "a_only": 459,
+    "b_only": 390,
+    "ties": 3463
+  },
+  "recfix_5600_vs_v9_5000_all": {
+    "n": 4312,
+    "a_saves": 2077,
+    "b_saves": 1931,
+    "a_pct": 48.17,
+    "b_pct": 44.78,
+    "delta_saves": 146,
+    "delta_pp": 3.39,
+    "ci95_pp": [
+      2.08,
+      4.69
+    ],
+    "a_only": 486,
+    "b_only": 340,
+    "ties": 3486
+  },
+  "recfix_5600_vs_landfix_5350_high": {
+    "n": 1432,
+    "a_saves": 533,
+    "b_saves": 568,
+    "a_pct": 37.22,
+    "b_pct": 39.66,
+    "delta_saves": -35,
+    "delta_pp": -2.44,
+    "ci95_pp": [
+      -4.7,
+      -0.19
+    ],
+    "a_only": 119,
+    "b_only": 154,
+    "ties": 1159
+  },
+  "recfix_5600_vs_landfix_5350_std": {
+    "n": 1080,
+    "a_saves": 828,
+    "b_saves": 875,
+    "a_pct": 76.67,
+    "b_pct": 81.02,
+    "delta_saves": -47,
+    "delta_pp": -4.35,
+    "ci95_pp": [
+      -6.94,
+      -1.77
+    ],
+    "a_only": 79,
+    "b_only": 126,
+    "ties": 875
+  },
+  "recfix_5400_vs_landfix_5350_std": {
+    "n": 1080,
+    "a_saves": 762,
+    "b_saves": 875,
+    "a_pct": 70.56,
+    "b_pct": 81.02,
+    "delta_saves": -113,
+    "delta_pp": -10.46,
+    "ci95_pp": [
+      -13.27,
+      -7.65
+    ],
+    "a_only": 69,
+    "b_only": 182,
+    "ties": 829
+  },
+  "audits": {
+    "landfix_5350": {
+      "tot_falls": 116,
+      "step_q": {
+        "min": 22,
+        "p25": 84,
+        "p50": 106,
+        "p75": 126,
+        "max": 147
+      },
+      "phases": {
+        "post_save_or_touch": 56,
+        "post_goal_miss": 60
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 52,
+        "post_goal_miss->goal": 60,
+        "post_save_or_touch->unr": 4
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 56,
+        "post_goal_miss|jumped_2ft_air": 60
+      },
+      "causes": {
+        "rapid_1step_hard|hard_tilt": 44,
+        "gradual_tilt/lowk|hard_tilt": 56,
+        "rapid_1step_hard|hard_force": 5,
+        "gradual_tilt/lowk|soft_no_reset": 10,
+        "gradual_tilt/lowk|hard_force": 1
+      },
+      "hard_terms": {
+        "excessive_tilt": 100,
+        "excessive_foot_force": 6
+      },
+      "modes": {
+        "STD|post_save_or_touch": 9,
+        "STD|post_goal_miss": 1,
+        "10ms|post_save_or_touch": 20,
+        "10ms|post_goal_miss": 18,
+        "12ms_5m|post_save_or_touch": 14,
+        "12ms_5m|post_goal_miss": 14,
+        "14ms_6m|post_goal_miss": 27,
+        "14ms_6m|post_save_or_touch": 13
+      },
+      "regs": {
+        "R0|post_goal_miss": 1,
+        "R0|post_save_or_touch": 2,
+        "R1|post_goal_miss": 21,
+        "R1|post_save_or_touch": 22,
+        "R2|post_goal_miss": 2,
+        "R2|post_save_or_touch": 8,
+        "R3|post_goal_miss": 29,
+        "R3|post_save_or_touch": 12,
+        "R4|post_goal_miss": 2,
+        "R4|post_save_or_touch": 4,
+        "R5|post_goal_miss": 5,
+        "R5|post_save_or_touch": 8
+      },
+      "nb_fall": {
+        "forearms": 25
+      },
+      "nb_stand": {
+        "forearms": 452
+      },
+      "tot_stand_saves": 2024,
+      "one_ft_stand_saves_at_s149": 494
+    },
+    "recfix_5400": {
+      "tot_falls": 68,
+      "step_q": {
+        "min": 23,
+        "p25": 103,
+        "p50": 112,
+        "p75": 132,
+        "max": 148
+      },
+      "phases": {
+        "post_save_or_touch": 36,
+        "post_goal_miss": 32
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 32,
+        "post_goal_miss->goal": 32,
+        "post_save_or_touch->unr": 4
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 36,
+        "post_goal_miss|jumped_2ft_air": 32
+      },
+      "causes": {
+        "gradual_tilt/lowk|hard_tilt": 39,
+        "rapid_1step_hard|hard_tilt": 20,
+        "gradual_tilt/lowk|hard_knee": 1,
+        "rapid_1step_hard|hard_force": 6,
+        "gradual_tilt/lowk|soft_no_reset": 2
+      },
+      "hard_terms": {
+        "excessive_tilt": 59,
+        "low_knee": 1,
+        "excessive_foot_force": 6
+      },
+      "modes": {
+        "STD|post_save_or_touch": 16,
+        "STD|post_goal_miss": 13,
+        "10ms|post_save_or_touch": 5,
+        "10ms|post_goal_miss": 5,
+        "12ms_5m|post_save_or_touch": 9,
+        "12ms_5m|post_goal_miss": 8,
+        "14ms_6m|post_save_or_touch": 6,
+        "14ms_6m|post_goal_miss": 6
+      },
+      "regs": {
+        "R0|post_goal_miss": 1,
+        "R0|post_save_or_touch": 1,
+        "R1|post_goal_miss": 4,
+        "R1|post_save_or_touch": 5,
+        "R2|post_goal_miss": 8,
+        "R2|post_save_or_touch": 12,
+        "R3|post_goal_miss": 16,
+        "R3|post_save_or_touch": 12,
+        "R4|post_goal_miss": 3,
+        "R4|post_save_or_touch": 4,
+        "R5|post_save_or_touch": 2
+      },
+      "nb_fall": {
+        "forearms": 16
+      },
+      "nb_stand": {
+        "forearms": 509
+      },
+      "tot_stand_saves": 1926,
+      "one_ft_stand_saves_at_s149": 335
+    },
+    "recfix_5600": {
+      "tot_falls": 234,
+      "step_q": {
+        "min": 28,
+        "p25": 108,
+        "p50": 126,
+        "p75": 140,
+        "max": 149
+      },
+      "phases": {
+        "post_goal_miss": 120,
+        "post_save_or_touch": 114
+      },
+      "phase_out": {
+        "post_goal_miss->goal": 120,
+        "post_save_or_touch->blk": 111,
+        "post_save_or_touch->unr": 3
+      },
+      "jump": {
+        "post_goal_miss|jumped_2ft_air": 120,
+        "post_save_or_touch|jumped_2ft_air": 114
+      },
+      "causes": {
+        "gradual_tilt/lowk|soft_no_reset": 25,
+        "gradual_tilt/lowk|hard_tilt": 135,
+        "rapid_1step_hard|hard_tilt": 61,
+        "rapid_1step_hard|hard_force": 12,
+        "rapid_1step_hard|hard_knee": 1
+      },
+      "hard_terms": {
+        "excessive_tilt": 196,
+        "excessive_foot_force": 12,
+        "low_knee": 1
+      },
+      "modes": {
+        "STD|post_goal_miss": 14,
+        "STD|post_save_or_touch": 42,
+        "10ms|post_goal_miss": 36,
+        "10ms|post_save_or_touch": 35,
+        "12ms_5m|post_goal_miss": 33,
+        "12ms_5m|post_save_or_touch": 19,
+        "14ms_6m|post_goal_miss": 37,
+        "14ms_6m|post_save_or_touch": 18
+      },
+      "regs": {
+        "R0|post_save_or_touch": 3,
+        "R1|post_goal_miss": 20,
+        "R1|post_save_or_touch": 37,
+        "R2|post_goal_miss": 12,
+        "R2|post_save_or_touch": 16,
+        "R3|post_goal_miss": 72,
+        "R3|post_save_or_touch": 36,
+        "R4|post_save_or_touch": 7,
+        "R5|post_goal_miss": 16,
+        "R5|post_save_or_touch": 15
+      },
+      "nb_fall": {
+        "forearms": 51
+      },
+      "nb_stand": {
+        "forearms": 339
+      },
+      "tot_stand_saves": 1966,
+      "one_ft_stand_saves_at_s149": 493
+    }
+  }
+}

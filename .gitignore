@@ -67,3 +67,13 @@ legged_gym/legged_gym/scripts/wandb
 # other
 *.egg-info
 __pycache__
+
+# K1 local notes, third-party PDFs, and raw simulation trace dumps
+/CHAT_SUMMARY.md
+/Humanoid_Goalkeeper.pdf
+/RC-HL-2025-Rules.pdf
+evaluation/*.motion.jsonl
+evaluation/*.trace.jsonl
+evaluation/*.failed-*.jsonl
+evaluation/*.pre_substep.jsonl
+evaluation/k1_recovery_*.jsonl

@@ -1,228 +1,131 @@
-# Humanoid Goalkeeper — Booster K1 Adaptation (Work in Progress)
+# Humanoid Goalkeeper for Booster K1
 
-[![arXiv](https://img.shields.io/badge/arXiv-2510.18002-brown)](https://arxiv.org/abs/2510.18002)
-[![Website 🚀](https://img.shields.io/badge/Website-%F0%9F%9A%80-yellow)](https://humanoid-goalkeeper.github.io/Goalkeeper/)
-[![Upstream Repo](https://img.shields.io/badge/Upstream-InternRobotics%2FGoalkeeper-blue)](https://github.com/InternRobotics/Goalkeeper)
-[![Status: WIP](https://img.shields.io/badge/Status-Work%20in%20Progress-orange)](#--current-status-limitations--roadmap-wip)
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![YouTube 🎬](https://img.shields.io/badge/Youtube-🎬-red)](https://youtu.be/ZK0gPame19M)
+[Internship report](#internship-report) · [Simulation gallery](#simulation-gallery) · [References](#references) · [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [Original paper](https://arxiv.org/abs/2510.18002) · [ICHIRO ITS](https://ichiro-its.org/)
 
-> **Attribution & Source Notice:**  
-> This repository is an ongoing adaptation built upon the official open-source implementation of **[Humanoid Goalkeeper: Learning from Position Conditioned Task-Motion Constraints](https://github.com/InternRobotics/Goalkeeper)** by **[Junli Ren](https://renjunli99.github.io/)\*, [Junfeng Long](https://junfeng-long.github.io/)\*, [Tao Huang](https://taohuang13.github.io/), [Huayi Wang](https://why618188.github.io/), [Zirui Wang](https://scholar.google.com/citations?user=Vc3DCUIAAAAJ&hl=zh-TW), [Feiyu Jia](https://trap-1.github.io/), [Wentao Zhang](https://zwt006.github.io/), [Jingbo Wang](https://wangjingbo1219.github.io/)†, [Ping Luo](https://luoping.me/)†, and [Jiangmiao Pang](https://oceanpang.github.io/)†** (*arXiv:2510.18002*).  
-> While preserving full backward compatibility with the original **Unitree G1 (29-DOF)** AMP-based goalkeeper, this work adapts and calibrates the framework for the **Booster K1 (22-DOF RoboCup KidSize)** humanoid robot using pure Reinforcement Learning without human motion-capture priors.
+I prepared this adaptation for a research internship with ICHIRO, the humanoid robot soccer team at Institut Teknologi Sepuluh Nopember (ITS). The question behind the experiments was simple: how often can a simulated Booster K1 stop a shot and still finish on its feet?
 
-> ⚠️ **Current Project Status (Work in Progress / Sementara):**  
-> Pengembangan untuk **Booster K1** saat ini **masih berlangsung (belum selesai sepenuhnya)**. Pada tahap sekarang (`k1_v2`), perilaku yang berhasil dilatih baru berfokus pada **kemampuan dasar menepis/menyentuh bola saat kontak pertama (*first-contact ball parrying*)** ke 6 arah gawang. Robot **belum sampai pada tahap menghalangi/mengawal bola secara tuntas (*full goal-denial & post-contact ball containment*)** untuk memastikan bola yang sudah ditepis benar-benar berhenti total atau tidak bergulir masuk ke gawang, serta masih kadang tersandung bola yang jatuh di dekat kakinya sehabis menepis. Lihat bagian [Current Status, Limitations & Roadmap](#-current-status-limitations--roadmap-wip) di bawah untuk detailnya.
+The starting point was the Unitree G1 goalkeeper framework released by Junli Ren and colleagues. This repository documents the work specific to the 22-joint Booster K1: adapting the robot and ball configuration, generating shots, detecting goals, tuning the rewards for blocking and landing, and comparing policies on the same shots. All K1 results below come from NVIDIA Isaac Gym. [Original implementation](https://github.com/InternRobotics/Humanoid-Goalkeeper) · [K1 environment configuration](legged_gym/legged_gym/envs/k1/k1_config.py)
 
----
+## Simulation gallery
 
-## 🥅 Booster K1 Goalkeeper Showcase (Simulation)
+Four verified standing saves from `landfix_5350` with the 15 cm (200 g) Size 1 ball and the 2.60 × 1.20 m goal frame, grouped by launch speed band.
 
-<p align="center">
-  <img width="48%" src="docs/k1_high_parry.png" alt="Booster K1 High Corner Parry">
-  <img width="48%" src="docs/k1_mid_parry.png" alt="Booster K1 Mid-Left Parry">
-</p>
-<p align="center">
-  <img width="48%" src="docs/k1_right_parry.png" alt="Booster K1 Mid-Right Parry">
-  <img width="48%" src="docs/k1_low_parry.png" alt="Booster K1 Low Corner Parry">
-</p>
-<p align="center">
-  <img width="65%" src="docs/k1_ready_stance.png" alt="Booster K1 Athletic Ready Stance">
-  <br>
-  <em>Booster K1 (22-DOF, 0.95 m, 19.67 kg) performing overhead jump parries, lateral arm sweeps, low crouch blocks, and maintaining its athletic ready stance in Isaac Gym.</em>
-</p>
+### Standard speed range (`~5.5–9.0 m/s`, launch `3.0–4.4 m` · `81.02%` saves)
 
----
+| Mid-left arm parry (`7.5 m/s` from `3.5 m`) | Low shin block (`8.0 m/s` from `3.5 m`) |
+|:---:|:---:|
+| ![Booster K1 shifting left in a wide stance to parry a 7.5 m/s mid-height shot at shoulder level](docs/k1_mid_parry.png) | ![Booster K1 planting both feet to block an 8.0 m/s low center shot with its lower leg](docs/k1_low_parry.png) |
+| Target `y = +0.45 m, z = 0.72 m` · standing two-foot save | Target `y = +0.05 m, z = 0.20 m` · standing two-foot save |
 
-## ✨ Key Extensions for Booster K1 (`--task k1`)
+### High-speed range (`10–14 m/s`, launch `3.0–6.0 m` · `33.70%–40.83%` saves)
 
-Unlike the full-sized Unitree G1 (`--task 29`), the **Booster K1** is a compact **RoboCup KidSize** humanoid (`0.95 m` tall, `19.67 kg`, `22 DOF`) without pre-recorded human goalkeeper motion-capture datasets (`amp_coef = 0.0`). This adaptation introduces the following engineering and RL calibrations:
+| High-corner overhead parry (`10.0 m/s` from `4.0 m`) | Fast right-side lateral parry (`12.0 m/s` from `5.0 m`) |
+|:---:|:---:|
+| ![Booster K1 leaping to parry a 10.0 m/s upper-left corner shot with its extended left hand inside the 2.60 x 1.20 m goal](docs/k1_high_parry.png) | ![Booster K1 leaping laterally to deflect a 12.0 m/s right-side shot with its extended right arm](docs/k1_right_parry.png) |
+| Target `y = +0.65 m, z = 1.05 m` · standing two-foot save | Target `y = −0.60 m, z = 0.78 m` · standing save |
 
-1. **RoboCup KidSize Physics & Asset Calibration**
-   - **Ball Physics (`ball_k1.urdf`)**: Calibrated to RoboCup KidSize specifications (`radius = 0.10 m`, `mass = 0.40 kg`, solid sphere inertia $I = 0.00267\text{ kg}\cdot\text{m}^2$), while preserving the original `ball.urdf` for Unitree G1.
-   - **K1 URDF & End-Effector Links (`k1.urdf`)**: Added dedicated `left_hand_link` and `right_hand_link` frames (`20 cm` distal from `elbow_yaw`) for accurate hand-to-ball tracking, and switched head/foot collision geometries to dedicated collision meshes (`Head_2_Collision.STL`, `Left_Foot_Collision.STL`, `Right_Foot_Collision.STL`).
-   - **Parabolic Ballistic Shot Solver**: Computes exact ballistic trajectories (`assign_ball_states`) targeting the 6 zones of a **RoboCup KidSize goal (`2.6 m × 1.2 m`)** with `< 2.1 cm` vertical arrival error at the goal line (`x = 0.08 m`).
+## Results
 
-2. **Athletic Ready Stance & Differentiated PD / Action Scaling**
-   - Configured a low-center-of-gravity goalkeeper stance (`z = 0.53 m`, `knee = 0.58 rad`, `ankle_pitch = -0.28 rad`, `hip_roll = ±0.10 rad`) with raised arms (`z ≈ 0.65 m`, midpoint of the `1.2 m` crossbar).
-   - Stiffened shoulder (`Kp = 42.0`) and elbow (`Kp = 34.0`) PD gains with per-group action scaling (`arm_action_scale = 0.65`, `leg_action_scale = 0.35`, `head_action_scale = 0.40`) so the arms swing rapidly while the legs remain planted and stable.
+**The demo uses `landfix_5350`.** It saved 875 of 1,080 standard shots (81.02%). Across all shot speeds, including shots up to 14 m/s, it saved 2,076 of 4,312 on-target attempts (48.14%). Upper corners were harder: it stopped 568 of 1,432 (39.66%). The simulated goal measured 2.60 × 1.20 m. The ball weighed 200 g and measured 15 cm in diameter. [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Run G results](evaluation/k1_g_allseeds_benchmark.json)
 
-3. **Anti-Reward-Hacking & Ground-Truth Parry Detection**
-   - **Goal-Conceded Cancellation**: Explicitly tracks whether the ball crosses the goal plane (`x < -0.05 m`, `|y| < 1.35 m`, `z < 1.25 m`) via `goal_conceded_flag`, zeroing out false-positive save rewards when a goal is conceded.
-   - **Velocity-Impulse & Trajectory Parry Verification**: Distinguishes genuine physical blocks ($\Delta v_x > 0.9\text{ m/s}$ or $\Delta v_{xy} > 1.2\text{ m/s}$ within `< 0.24 m` of the robot) and scales rewards between clean parries deflected outside the goal frame (`1.0x`) versus light grazes (`0.35x`), with a `1.5x` bonus for arm/hand saves.
-   - **Goldilocks Reward Balance**: Calibrated `stopball = 450.0`, `eereach = 26.0` (with active hand closing-velocity bonus), `success = 16.0`, and `termination = -220.0` to eliminate both passive standing and suicidal diving.
-   - **AMP Bypass Optimization**: Bypasses unused 6-skill AMP discriminators in `HIMPPO` and `HIMOnPolicyRunner` when `amp_coef <= 0`, reducing VRAM usage and reaching `~24,500 FPS` on a single laptop GPU.
+| Checkpoint | Random saves / 4,312 on target | Upper-corner saves / 1,432 | Falls / 4,320 trials | Fixed-shot saves / 69 |
+|---|---:|---:|---:|---:|
+| `v9_5000` (baseline) | 1,931 (44.78%) | 414 | 70 | 28 |
+| `nocollide_5200` (Run F) | 2,008 (46.57%) | 522 | 153 | 40 |
+| **`landfix_5350` (Run G, demo)** | **2,076 (48.14%)** | **568** | 116 | **47** |
+| `gema25_5400` (Run I, EMA ablation) | 2,079 (48.21%) | 532 | 93 | 46 |
 
----
+Per-speed breakdown for **`landfix_5350`** across all three evaluation seeds (`1, 777, 2026`):
 
-## 📊 Booster K1 Evaluation Benchmark (`k1_v2`, Iter 3,400)
+| Speed range | Launch distance | Saves / on-target shots | Save rate | Falls / 1,080 trials |
+|---|---|---:|---:|---:|
+| Standard (`~5.5–9.0 m/s`) | `3.0–4.4 m` | 875 / 1,080 | **81.02%** | **10** (0.93%) |
+| Fast (`10 m/s`) | `3.0–4.4 m` | 396 / 1,072 | 36.94% | 38 (3.52%) |
+| Fast (`12 m/s`) | `5.0 m` | 441 / 1,080 | 40.83% | 28 (2.59%) |
+| Fast (`14 m/s`) | `6.0 m` | 364 / 1,080 | 33.70% | 40 (3.70%) |
 
-Evaluated across **472 randomized shots** spanning the full RoboCup KidSize goal (`2.6 m × 1.2 m`):
+![Save rate versus shot speed across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_speed.png)
 
-| Metric | Value | Notes |
-| :--- | :---: | :--- |
-| **True Save Rate** | **89.72%** | Physical saves where the ball never enters the goal |
-| **Arm / Hand Save Rate** | **82.10%** | Saves executed directly with the hands/forearms |
-| **Goal Conceded Rate** | **9.22%** | Shots that pass into the goal frame |
-| **Post-Save Fall Rate** | **8.05%** | 91.95% of episodes remain upright through completion |
-| **Mean Max Arm Swing** | **90.8° (`1.58 rad`)** | Active, high-velocity arm interception |
-| **Mean Max Lateral Reach** | **52.1 cm** (max **191.4 cm**) | Dynamic sidestepping across the goal line |
+![Save rate versus target position R0 to R5 across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_region.png)
 
-**Save Rate by Goal Region (First-Contact Parry Evaluation):**
-- **Region 0 (Mid-Left)**: `93.8%` (`76 / 81`)
-- **Region 1 (Mid-Right)**: `90.0%` (`72 / 80`)
-- **Region 2 (High-Left / Crossbar)**: `78.8%` (`63 / 80`)
-- **Region 3 (High-Right / Crossbar)**: `85.0%` (`68 / 80`)
-- **Region 4 (Low-Left / Ground)**: `88.8%` (`71 / 80`)
-- **Region 5 (Low-Right / Ground)**: `88.8%` (`71 / 80`)
+The choice of demo policy came down to a trade-off. The two finalists finished three saves apart overall. For Run I relative to Run G, the estimated difference was +0.07 percentage points (paired 95% confidence interval −1.15 to +1.29). I selected `landfix_5350` for its 36 additional upper-corner saves. For studying balance, `gema25_5400` is a useful comparison: it fell 23 fewer times. [Run I results](evaluation/k1_i_allseeds_benchmark.json) · [Paired comparisons](evaluation/k1_i_paired_ci.json)
 
----
+The random benchmark used evaluation seeds 1, 777, and 2026. A run without a goalkeeper identified the 4,312 shots that would have scored. The evaluator checked ball contact, goal crossing, and the final ball state. Falls use all 4,320 trials as their denominator. A separate set of 69 fixed shots covers sprint, between-the-legs, motion, and high-ball scenarios. Performance on a physical K1 and repeatability across training seeds remain open questions. [Outcome definitions](legged_gym/legged_gym/utils/shot_outcome.py)
 
-## 🚧 Current Status, Limitations & Roadmap (WIP)
+## Internship report
 
-Proyek adaptasi Booster K1 ini **masih bersifat sementara (*Work in Progress*)** dan belum mencapai tahap akhir. Berikut adalah batasan perilaku model saat ini (`k1_v2`) yang sedang dikerjakan untuk iterasi berikutnya:
+The [working report](docs/run_e_results.md) contains the experimental setup, results tables, and notes for the write-up. The final internship PDF is pending. Its reserved location is `docs/k1-internship-report.pdf`.
+<!-- When the final file is available, add [Download the internship report (PDF)](docs/k1-internship-report.pdf) to the opening link row. -->
+<!-- Maintainer upload shortcut: https://github.com/bahyra26/Humanoid-Goalkeeper/upload/main/docs -->
 
-1. **Baru Sebatas Menepis Kontak Pertama (*Parry-Only vs. True Goal Denial*)**
-   - Saat ini, logika reward (`_reward_stopball` & `stop_flag = 1`) menilai tugas mengejar bola selesai begitu tangan/lengan robot berhasil melakukan kontak/tepisan pertama dengan bola.
-   - Begitu `stop_flag` berubah menjadi `1`, input observasi posisi bola ke jaringan saraf robot langsung dinolkan (`flying = False`). Akibatnya, robot **belum memiliki kesadaran lanjutan untuk terus menghalangi/menahan bola** jika pantulan bola masih bergulir pelan menuju gawang.
-2. **Interaksi Fisika Bola Jatuh & Tersandung Pasca-Tepis (*Post-Parry Stumbling*)**
-   - Aset bola saat ini masih menggunakan *restitution* bawaan (`0.0`), sehingga bola yang ditepis di area depan-samping cenderung langsung jatuh ke tanah tepat di depan kaki robot, bukan memantul jauh.
-   - Karena sensor bola dimatikan pasca-kontak pertama dan reward `feet_slippage` langsung menahan pergeseran telapak kaki, robot kadang **tersandung bola yang jatuh di dekat kakinya** atau kehilangan keseimbangan saat mengerem langkah samping.
-3. **Target Pengembangan Selanjutnya (*Next Steps*)**
-   - Menjaga observasi bola tetap aktif selama bola masih berada di depan garis gawang (`x > -0.05 m`) meskipun sudah disentuh sekali.
-   - Mengubah fungsi objektif dari sekadar *first-contact parry* menjadi **full goal-line denial** (memastikan bola benar-benar terhenti `vx >= 0` atau terbuang keluar gawang, disertai penalti tegas jika bola tetap masuk ke gawang).
-   - Menambahkan kalibrasi *restitution* bola serta fase *recovery step* agar robot dapat melangkah stabil sehabis menepis tanpa tersandung.
+## Installation
 
----
+Use Linux, an NVIDIA GPU, and an Isaac Gym Preview installation compatible with Python 3.8. Follow NVIDIA's driver and PyTorch requirements for your Isaac Gym release. From the root of this K1 repository, replace the example Isaac Gym path with your local installation. [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym)
 
-## 🛠️ Installation Instructions
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/InternRobotics/Goalkeeper.git
-   cd Goalkeeper
-   ```
-
-2. **Create and activate the Conda environment (Python 3.8)**
-   ```bash
-   conda create -n goalkeeper python=3.8
-   conda activate goalkeeper
-   ```
-
-3. **Install [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym)**
-   ```bash
-   cd isaacgym/python && pip install -e . && cd ../..
-   ```
-
-4. **Install `rsl_rl`, `legged_gym`, and dependencies**
-   ```bash
-   cd rsl_rl && pip install -e . && cd ..
-   cd legged_gym && pip install -e . && cd ..
-   pip install -r requirements.txt
-   ```
-
----
-
-## ▶️ Usage Guide
-
-### 1. Booster K1 Goalkeeper (`--task k1`)
-
-**Train Booster K1 (Headless GPU):**
 ```bash
-cd legged_gym/legged_gym/scripts
-python train.py --task k1 --num_envs 2400 --exptid k1_v2 --headless
+conda create -n goalkeeper python=3.8
+conda activate goalkeeper
+python -m pip install -e /path/to/isaacgym/python
+python -m pip install -e ./rsl_rl -e ./legged_gym
+python -m pip install -r requirements.txt
 ```
 
-**Resume Training from Checkpoint:**
+## Run the demo
+
+The viewer loads local weights from `legged_gym/logs/k1/<experiment>/model_<iteration>.pt`. The K1 experiment checkpoints are stored outside Git. Place the matching checkpoint there before starting the viewer. The ball check runs without a GPU or checkpoint. [Demo launcher](play_k1_size1.sh)
+
 ```bash
-python train.py --task k1 --num_envs 2400 --exptid k1_v2 --resume --headless
+./play_k1_size1.sh --check
+./play_k1_size1.sh --exptid k1_v9_s1_landfix --checkpoint 5350
+./play_k1_size1.sh --exptid k1_v9_s1_gema25 --checkpoint 5400
 ```
 
-**Visualize Trained Policy in 3D Viewer:**
+To launch from 3 m at 8 m/s, append `--start_x 3 --ball_speed 8`. Set `--target_y` and `--target_z` to aim at a particular point in metres. If the solver reports a minimum launch speed, move the launch point closer or increase the speed. The viewer requires an active graphical session.
+
+## Train and evaluate
+
+Use a fresh experiment ID for each run. The second command resumes from the selected checkpoint using the reward configuration in your checkout. Reproducing Run I requires its exponential-moving-average recovery reward with weight 25.
+
 ```bash
-cd legged_gym/legged_gym/scripts
-python play_k1.py --exptid k1_v2
+python legged_gym/legged_gym/scripts/train.py --task k1 --exptid k1_local_train --seed 1 --num_envs 1536 --headless
+python legged_gym/legged_gym/scripts/train.py --task k1 --resume --resumeid k1_v9_s1_landfix --checkpoint 5350 --exptid k1_local_resume --seed 1 --max_iterations 50 --num_envs 1536 --headless
 ```
 
-**Custom Ball Targeting & Shot Control in `play_k1.py` / `play.py`:**
-You can manually aim shots at specific goal regions or exact $(Y, Z)$ coordinates on the goal line:
+The paired benchmark needs the evaluation checkpoints passed via `--models` and the shot lists under `evaluation/`. The example writes to a separate results file. [Benchmark script](legged_gym/legged_gym/scripts/benchmark_k1.py)
+
 ```bash
-# Aim at a specific goal region (0: Mid-L, 1: Mid-R, 2: High-L, 3: High-R, 4: Low-L, 5: Low-R)
-python play_k1.py --exptid k1_v2 --region 2
-
-# Aim at exact goal-line coordinates (Y in [-1.3m, +1.3m], Z in [0.1m, 1.2m])
-python play_k1.py --exptid k1_v2 --target_y 0.85 --target_z 1.05
-
-# Customize shot flight time (e.g., 0.5s fast shot) with a single goalkeeper in the viewer
-python play_k1.py --exptid k1_v2 --num_envs 1 --target_y -0.65 --target_z 0.55 --flight_time 0.55
+python legged_gym/legged_gym/scripts/benchmark_k1.py --seeds 1 777 2026 \
+  --models landfix_5350=legged_gym/logs/k1/k1_v9_s1_landfix/model_5350.pt \
+           gema25_5400=legged_gym/logs/k1/k1_v9_s1_gema25/model_5400.pt \
+  --output evaluation/local_comparison.json
+python -m unittest discover -s tests -v
 ```
 
-**Inspect Booster K1 URDF & Ready Stance:**
-```bash
-python view_k1.py
-```
+## Repository guide
 
----
+| Topic | Where to look |
+|---|---|
+| Observations, actions, and rewards | [K1 configuration](legged_gym/legged_gym/envs/k1/k1_config.py) and [environment code](legged_gym/legged_gym/envs/base/legged_robot.py) |
+| Reward calibration | [Calibration experiments](evaluation/K1_REWARD_CALIBRATION.md) |
+| Shot lists and benchmark outputs | [Evaluation directory](evaluation/) |
+| Underlying simulation and training libraries | [legged_gym](legged_gym/README.md) and [rsl_rl](rsl_rl/README.md) |
 
-### 2. Original Unitree G1 Goalkeeper (`--task 29`)
+## References
 
-<p align="center">
-  <img width="95%" src="docs/teaser.png" alt="Original Unitree G1 Humanoid Goalkeeper Teaser">
-</p>
+1. **Humanoid Goalkeeper (upstream method & codebase):** Junli Ren, Junfeng Long, Tao Huang, Huayi Wang, Zirui Wang, Feiyu Jia, Wentao Zhang, Jingbo Wang, Ping Luo, and Jiangmiao Pang, *Humanoid Goalkeeper: Learning from Position Conditioned Task-Motion Constraints*, arXiv:2510.18002 (2025). [arXiv](https://arxiv.org/abs/2510.18002) · [Project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [GitHub](https://github.com/InternRobotics/Humanoid-Goalkeeper)
+2. **Dynamic Quadrupedal Robotic Goalkeeper (prior RL legged goalkeeping benchmark):** Xiaoyu Huang, Zhongyu Li, Yanzhen Xiang, Yiming Ni, Yufeng Chi, Yunhao Li, Lizhi Yang, Xue Bin Peng, and Koushil Sreenath, *Creating a Dynamic Quadrupedal Robotic Goalkeeper with Reinforcement Learning*, in *IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*, 2023, arXiv:2210.04435. [arXiv](https://arxiv.org/abs/2210.04435)
+3. **Legged Gym & RSL-RL (simulation environment & PPO library):** Nikita Rudin et al., Robotic Systems Lab, ETH Zurich, *Isaac Gym Environments for Legged Robots*, arXiv:2109.11978. [arXiv](https://arxiv.org/abs/2109.11978) · [Project website](https://leggedrobotics.github.io/legged_gym/) · [legged_gym](https://github.com/leggedrobotics/legged_gym) · [rsl_rl](https://github.com/leggedrobotics/rsl_rl)
+4. **NVIDIA Isaac Gym (GPU physics simulation):** [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym)
+5. **RoboCup Humanoid League Rules (2025) (KidSize goal & Size 1 ball specifications):** [Official Rules PDF](https://humanoid.robocup.org/wp-content/uploads/RC-HL-2025-Rules.pdf)
+6. **ICHIRO ITS (internship host team):** [ICHIRO — Institut Teknologi Sepuluh Nopember](https://ichiro-its.org/)
+<!-- Add additional papers, Booster K1 hardware/URDF references, or internship citations here. -->
 
-All original Unitree G1 workflows remain fully supported:
-```bash
-cd legged_gym/legged_gym/scripts
-# Train Unitree G1
-python train.py --task 29 --exptid g1_gk
+## Citation and licensing
 
-# Evaluate Unitree G1
-python play.py --task 29 --exptid g1_gk
-```
+Credit the original method to Junli Ren, Junfeng Long, Tao Huang, Huayi Wang, Zirui Wang, Feiyu Jia, Wentao Zhang, Jingbo Wang, Ping Luo, and Jiangmiao Pang, *Humanoid Goalkeeper: Learning from Position Conditioned Task-Motion Constraints*, arXiv:2510.18002 (2025). When reporting a K1 result, also identify this adaptation, the repository revision, checkpoint, and evaluation seeds. [Original paper](https://arxiv.org/abs/2510.18002) · [Upstream source](https://github.com/InternRobotics/Humanoid-Goalkeeper)
 
-> **Note:** For a quick try on Unitree G1, reference checkpoints are available in `legged_gym/resources/weight/`.
+The root license credits Junli Ren (2025) and specifies CC BY-NC-SA 4.0. For material it covers, retain attribution, identify modifications, link to the license, and follow its noncommercial and share-alike conditions. [Repository license](LICENSE) · [License summary](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
----
+The bundled libraries and assets carry their own notices. Preserve the ETH Zurich, Nikita Rudin, and NVIDIA notices when redistributing their code. Check the terms for the specific robot meshes, motion datasets, and pretrained weights you intend to distribute. [legged_gym license](legged_gym/LICENSE) · [rsl_rl license](rsl_rl/LICENSE) · [ANYbotics asset license](legged_gym/resources/gymassets/urdf/anymal_b_simple_description/LICENSE) · [Fetch and Shadow Hand notices](legged_gym/resources/gymassets/mjcf/open_ai_assets/LICENSE.md)
 
-## 🧰 Troubleshooting
-
-- **`ImportError: libpython3.8.so.1.0: cannot open shared object file`**
-  ```bash
-  export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
-  # Or copy to /usr/lib:
-  sudo cp $CONDA_PREFIX/lib/libpython3.8.so.1.0 /usr/lib/
-  ```
-- **`Segmentation fault (core dumped)` when running `play.py` with `CUDA_VISIBLE_DEVICES=""`**
-  - The Isaac Gym 3D viewer (`headless = False`) requires an active GPU CUDA context for OpenGL/Vulkan rendering. Run `play.py` / `play_k1.py` **without** `CUDA_VISIBLE_DEVICES=""`.
-- **`CUDA out of memory`**
-  - Reduce `--num_envs` (e.g., `--num_envs 1536` or `--num_envs 1200` on 6 GB VRAM laptops).
-
----
-
-## 📚 Credits, Sources & Citation
-
-This project builds upon the following open-source works. Please cite the original paper when using this repository in academic or research settings:
-
-1. **Upstream Framework & Methodology**:  
-   *Humanoid Goalkeeper: Learning from Position Conditioned Task-Motion Constraints* — [InternRobotics/Goalkeeper](https://github.com/InternRobotics/Goalkeeper) ([Project Page](https://humanoid-goalkeeper.github.io/Goalkeeper/), [arXiv:2510.18002](https://arxiv.org/abs/2510.18002)).  
-   For questions regarding the original paper, please contact **junlir@connect.hku.hk**.
-2. **Simulation Base**:  
-   [legged_gym](https://github.com/leggedrobotics/legged_gym) and [rsl_rl](https://github.com/leggedrobotics/rsl_rl) by ETH Zurich Robotic Systems Lab & NVIDIA Isaac Gym.
-3. **Robot Models**:  
-    Booster K1 URDF & meshes by **Booster Robotics**; Unitree G1 URDF & meshes by **Unitree Robotics**.
-
-```bibtex
-@article{ren2025humanoidgoalkeeper,
-  title={Humanoid Goalkeeper: Learning from Position Conditioned Task-Motion Constraints},
-  author={Ren, Junli and Long, Junfeng and Huang, Tao and Wang, Huayi and Wang, Zirui and Jia, Feiyu and Zhang, Wentao and Wang, Jingbo and Luo, Ping and Pang, Jiangmiao},
-  journal={arXiv preprint arXiv:2510.18002},
-  year={2025}
-}
-```
-
----
-
-## 📄 License
-
-This project inherits the license of the original upstream repository and is licensed under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0 International License</a> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>.  
-Commercial use is not allowed without explicit authorization from the original authors.
+For the upstream paper, its teaser, and the competition rules, use the publisher or project links rather than redistributing third-party PDFs; `docs/teaser.png` is inherited from the upstream repository. [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [RoboCup Humanoid League rules (2025)](https://humanoid.robocup.org/wp-content/uploads/RC-HL-2025-Rules.pdf)

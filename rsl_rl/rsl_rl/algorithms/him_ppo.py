@@ -251,7 +251,7 @@ class HIMPPO:
                 if self.amp is not None and self.amp_coef > 0:
                     # import ipdb; ipdb.set_trace()
 
-                    motion_ids = 3 * critic_obs_batch[:,self.actor_critic.num_one_step_obs + 3]
+                    motion_ids = (3 * critic_obs_batch[:,self.actor_critic.num_one_step_obs + 3]).round().long()
                     amp_expert_obs_batch_mask = torch.zeros_like(amp_obs_batch)
                     motion_ids_0 = motion_ids == 0
                     if motion_ids_0.any():
@@ -291,7 +291,8 @@ class HIMPPO:
 
                                         
                     amp_expert_obs_batch = self.amp_normalizer.normalize_torch(amp_expert_obs_batch_mask, self.device)
-                    amp_obs_batch = self.amp_normalizer.normalize_torch(amp_obs_batch, self.device)
+                    raw_amp_obs_batch = amp_obs_batch
+                    amp_obs_batch = self.amp_normalizer.normalize_torch(raw_amp_obs_batch, self.device)
             
                     amp_loss, expert_loss, policy_loss = 0.0, 0.0, 0.0
                     for motion_key, motion_mask in zip(
@@ -307,8 +308,8 @@ class HIMPPO:
 
 
                     loss += amp_loss
-                    self.amp_normalizer.update(amp_obs_batch.cpu().detach().numpy())
-                    self.amp_normalizer.update(amp_expert_obs_batch.cpu().detach().numpy())
+                    self.amp_normalizer.update(raw_amp_obs_batch.cpu().detach().numpy())
+                    self.amp_normalizer.update(amp_expert_obs_batch_mask.cpu().detach().numpy())
 
                 # Gradient step
                 self.optimizer.zero_grad()

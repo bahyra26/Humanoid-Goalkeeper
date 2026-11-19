@@ -6,7 +6,5 @@ pyfqmr
 tqdm
 opencv-python
 numpy<1.24
-ipdb
-flask
 onnx
 onnxruntime

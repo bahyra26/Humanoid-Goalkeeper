@@ -206,7 +206,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
 
     return env_cfg, cfg_train
 
-def get_args():
+def get_args(extra_parameters=None):
     custom_parameters = [
         {"name": "--task", "type": str, "default": "29", "help": "Resume training or start testing from a checkpoint. Overrides config file if provided."},
         {"name": "--resume", "action": "store_true", "default": False,  "help": "Resume training from a checkpoint"},
@@ -226,12 +226,24 @@ def get_args():
         {"name": "--region", "type": int, "default": None, "help": "Force all envs to aim at a specific region (0: Mid-L, 1: Mid-R, 2: High-L, 3: High-R, 4: Low-L, 5: Low-R)"},
         {"name": "--target_y", "type": float, "default": None, "help": "Custom horizontal target coordinate on goal line (Y: -1.3m right post to +1.3m left post)"},
         {"name": "--target_z", "type": float, "default": None, "help": "Custom vertical target coordinate on goal line (Z: 0.1m ground to 1.2m crossbar)"},
+        {"name": "--ball_speed", "type": float, "default": None, "help": "K1 initial ball speed magnitude in m/s; exclusive with --flight_time"},
+        {"name": "--speed", "type": float, "default": None, "help": "Alias for --ball_speed (initial ball speed in m/s)"},
+        {"name": "--kecepatan", "type": float, "default": None, "help": "Alias Bahasa Indonesia untuk --ball_speed (m/s)"},
         {"name": "--flight_time", "type": float, "default": None, "help": "Custom ball flight duration in seconds (e.g. 0.5 for fast shot, 1.0 for slow shot)"},
+        {"name": "--start_x", "type": float, "default": None, "help": "Custom ball start distance in front of goal (X in meters, e.g. 3.5)"},
+        {"name": "--distance", "type": float, "default": None, "help": "Alias for --start_x (launch distance X in meters)"},
+        {"name": "--jarak", "type": float, "default": None, "help": "Alias Bahasa Indonesia untuk --start_x (jarak tendangan X dalam meter)"},
+        {"name": "--start_y", "type": float, "default": None, "help": "Custom ball start lateral offset (Y in meters, e.g. 0.0)"},
     ]
     # parse arguments
     args = gymutil.parse_arguments(
         description="RL Policy",
-        custom_parameters=custom_parameters)
+        custom_parameters=custom_parameters + (extra_parameters or []))
+
+    if getattr(args, "ball_speed", None) is None:
+        args.ball_speed = getattr(args, "speed", None) if getattr(args, "speed", None) is not None else getattr(args, "kecepatan", None)
+    if getattr(args, "start_x", None) is None:
+        args.start_x = getattr(args, "distance", None) if getattr(args, "distance", None) is not None else getattr(args, "jarak", None)
 
     if args.gui:
         args.headless = False
@@ -316,4 +328,3 @@ class PolicyOnnx(torch.nn.Module):
         )    
 
 
-    

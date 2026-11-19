@@ -90,6 +90,7 @@ class BaseTask():
         # todo: read from config
         self.enable_viewer_sync = True
         self.viewer = None
+        self.viewer_action_events = []
 
         # if running with a viewer, set up keyboard shortcuts and camera
         if self.headless == False:
@@ -126,6 +127,10 @@ class BaseTask():
     def step(self, actions):
         raise NotImplementedError
 
+    def _draw_viewer_overlays(self):
+        """Optional hook for drawing viewer-only debug geometry (goalposts, nets, targets)."""
+        pass
+
     def render(self, sync_frame_time=True):
         if self.viewer:
             # check for window closed
@@ -138,17 +143,19 @@ class BaseTask():
                     sys.exit()
                 elif evt.action == "toggle_viewer_sync" and evt.value > 0:
                     self.enable_viewer_sync = not self.enable_viewer_sync
-
-                if evt.action == "pause" and evt.value > 0:
+                elif evt.action == "pause" and evt.value > 0:
                     self.pause = True
                     while self.pause:
                         time.sleep(0.1)
+                        self._draw_viewer_overlays()
                         self.gym.draw_viewer(self.viewer, self.sim, True)
                         for evt in self.gym.query_viewer_action_events(self.viewer):
                             if evt.action == "pause" and evt.value > 0:
                                 self.pause = False
                         if self.gym.query_viewer_has_closed(self.viewer):
                             sys.exit()
+                elif evt.value > 0:
+                    self.viewer_action_events.append(evt.action)
 
 
             # fetch results
@@ -158,6 +165,7 @@ class BaseTask():
 
             # step graphics
             if self.enable_viewer_sync:
+                self._draw_viewer_overlays()
                 self.gym.step_graphics(self.sim)
                 self.gym.draw_viewer(self.viewer, self.sim, True)
                 if sync_frame_time:

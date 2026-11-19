@@ -4,18 +4,18 @@
     <visual>
       <origin xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.1"/>
+        <sphere radius="0.075"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.1"/>
+        <sphere radius="0.075"/>
       </geometry>
     </collision>
     <inertial>
-      <mass value="0.40"/>
-      <inertia ixx="0.00267" ixy="0.0" ixz="0.0" iyy="0.00267" iyz="0.0" izz="0.00267"/>
+      <mass value="0.200"/>
+      <inertia ixx="0.00075" ixy="0.0" ixz="0.0" iyy="0.00075" iyz="0.0" izz="0.00075"/>
     </inertial>
   </link>
 </robot>

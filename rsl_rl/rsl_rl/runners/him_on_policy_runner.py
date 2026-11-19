@@ -45,6 +45,7 @@ from rsl_rl.env import VecEnv
 from rsl_rl.utils import store_code_state
 from copy import copy, deepcopy
 import warnings
+import tempfile
 from rsl_rl.modules import AMP
 from rsl_rl.utils.utils import Normalizer
 
@@ -156,6 +157,7 @@ class HIMOnPolicyRunner:
                     for i in range(self.num_steps_per_env):
                         actions = self.alg.act(obs, critic_obs)
                         old_amp_state = amp_state
+                        motion_ids = (3 * critic_obs[:, self.alg.actor_critic.num_one_step_obs + 3]).round().long()
                         obs, privileged_obs, raw_rewards, dones, infos, termination_ids, termination_privileged_obs = self.env.step(actions)
 
                         critic_obs = privileged_obs if privileged_obs is not None else obs
@@ -168,10 +170,11 @@ class HIMOnPolicyRunner:
 
                         if self.amp_coef > 0:
                             amp_state = self.env.get_amp_observations().to(self.device)
-                            amp_state_ = torch.cat([old_amp_state, amp_state], dim=1).to(self.device)
+                            next_amp_state = amp_state.clone()
+                            next_amp_state[termination_ids] = infos['terminal_amp_observations'].to(self.device)
+                            amp_state_ = torch.cat([old_amp_state, next_amp_state], dim=1).to(self.device)
                             self.alg.process_amp_state(amp_state_)
 
-                            motion_ids = 3 * critic_obs[:,self.alg.actor_critic.num_one_step_obs + 3]
                             for motion_key, motion_val in zip(
                                 ["lefthand", "righthand", "leftjump", "rightjump", "leftstep", "rightstep"],
                                 [0, 1, 2, 3, 4, 5]
@@ -223,8 +226,9 @@ class HIMOnPolicyRunner:
                 learn_time = stop - start
                 if self.log_dir is not None:
                     self.log(locals())
-                if it % self.save_interval == 0:
-                    self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(it)))
+                self.current_learning_iteration = it + 1
+                if self.current_learning_iteration % self.save_interval == 0:
+                    self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
                 ep_infos.clear()
                 if it == start_iter:
                     # obtain all the diff files
@@ -233,7 +237,6 @@ class HIMOnPolicyRunner:
                     if self.logger_type == "wandb" and git_file_paths:
                         for path in git_file_paths:
                             self.writer.save_file(path)
-                self.current_learning_iteration = it
         except KeyboardInterrupt:
             if self.log_dir is not None:
                 ckpt_path = os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration))
@@ -250,9 +253,11 @@ class HIMOnPolicyRunner:
 
         ep_string = f''
         if locs['ep_infos']:
-            for key in locs['ep_infos'][0]:
+            for key in dict.fromkeys(key for info in locs['ep_infos'] for key in info):
                 infotensor = torch.tensor([], device=self.device)
                 for ep_info in locs['ep_infos']:
+                    if key not in ep_info:
+                        continue
                     # handle scalar and zero dimensional tensor infos
                     if not isinstance(ep_info[key], torch.Tensor):
                         ep_info[key] = torch.Tensor([ep_info[key]])
@@ -330,9 +335,11 @@ class HIMOnPolicyRunner:
 
         ep_string = f''
         if locs['ep_infos']:
-            for key in locs['ep_infos'][0]:
+            for key in dict.fromkeys(key for info in locs['ep_infos'] for key in info):
                 infotensor = torch.tensor([], device=self.device)
                 for ep_info in locs['ep_infos']:
+                    if key not in ep_info:
+                        continue
                     # handle scalar and zero dimensional tensor infos
                     if not isinstance(ep_info[key], torch.Tensor):
                         ep_info[key] = torch.Tensor([ep_info[key]])
@@ -395,19 +402,46 @@ class HIMOnPolicyRunner:
         state_dict = {
             'model_state_dict': self.alg.actor_critic.state_dict(),
             'optimizer_state_dict': self.alg.optimizer.state_dict(),
-            'iter': self.current_learning_iteration + 1,
+            'iter': self.current_learning_iteration,
             'infos': infos,
             }
-        torch.save(state_dict, path)
+        if self.alg.amp is not None:
+            state_dict['amp_state_dict'] = {key: model.state_dict() for key, model in self.alg.amp.items()}
+            state_dict['amp_normalizer'] = {key: getattr(self.alg.amp_normalizer, key)
+                                            for key in ('mean', 'var', 'count')}
+            state_dict['amp_joint_names'] = getattr(self.env.cfg.amp, 'joint_names', self.env.dof_names)
+        fd, temporary = tempfile.mkstemp(prefix='.checkpoint_', suffix='.pt', dir=os.path.dirname(path))
+        os.close(fd)
+        try:
+            torch.save(state_dict, temporary)
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path, map_location=self.device)
+        if self.alg.amp is not None:
+            if 'amp_state_dict' not in loaded_dict:
+                if load_optimizer:
+                    raise ValueError('Checkpoint has no AMP state; use load_optimizer=False for a policy warm start')
+            else:
+                joint_names = getattr(self.env.cfg.amp, 'joint_names', self.env.dof_names)
+                if loaded_dict.get('amp_joint_names') != joint_names:
+                    raise ValueError('Checkpoint AMP joints differ from the environment')
+                for key, model in self.alg.amp.items():
+                    model.load_state_dict(loaded_dict['amp_state_dict'][key])
+                for key in ('mean', 'var', 'count'):
+                    setattr(self.alg.amp_normalizer, key, loaded_dict['amp_normalizer'][key])
         self.alg.actor_critic.load_state_dict(loaded_dict['model_state_dict'])
+        self.loaded_checkpoint_path = os.path.abspath(path)
 
         if load_optimizer and 'optimizer_state_dict' in loaded_dict:
             try:
                 self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
+                if hasattr(self.alg, 'learning_rate') and self.alg.optimizer.param_groups:
+                    self.alg.learning_rate = float(self.alg.optimizer.param_groups[0].get('lr', self.alg.learning_rate))
             except ValueError as e:
                 warnings.warn(f"Skipping full optimizer state load due to parameter group mismatch: {e}")
         self.current_learning_iteration = loaded_dict['iter']

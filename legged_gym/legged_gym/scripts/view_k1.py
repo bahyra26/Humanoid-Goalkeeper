@@ -43,7 +43,7 @@ asset = gym.load_asset(sim, asset_root, asset_file, asset_options)
 
 # Load Ball Asset
 ball_root = os.path.join(LEGGED_GYM_ROOT_DIR, "resources/gymassets/urdf")
-ball_file = "ball.urdf"
+ball_file = "ball_k1.urdf"
 ball_options = gymapi.AssetOptions()
 ball_options.fix_base_link = True
 ball_asset = gym.load_asset(sim, ball_root, ball_file, ball_options)

@@ -1,0 +1,59 @@
+{
+  "joint_names": [
+    "aaleft_shoulder_pitch_joint",
+    "left_shoulder_roll_joint",
+    "left_elbow_pitch_joint",
+    "left_elbow_yaw_joint",
+    "aaright_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_elbow_pitch_joint",
+    "right_elbow_yaw_joint"
+  ],
+  "fps": 30,
+  "method": "URDF elbow/hand paths relative to shoulder, scaled by arm length; bounded IK",
+  "limits": "Arm kinematics only; collision, whole-body balance and human style not certified.",
+  "clips": {
+    "lefthand": {
+      "frames": 123,
+      "mean_position_error_m": 0.010720828548073769,
+      "max_position_error_m": 0.034272678196430206,
+      "peak_joint_speed_rad_s": 7.206466197967529,
+      "source_sha256": "4c946a83c35a4baa22ee4e9a9f582eadf1bd878dd2133b7185da9e08f8812995"
+    },
+    "leftjump": {
+      "frames": 254,
+      "mean_position_error_m": 0.01157221570611,
+      "max_position_error_m": 0.04506973549723625,
+      "peak_joint_speed_rad_s": 7.042664527893066,
+      "source_sha256": "d88fa2d1e9df07191c370bc95f915d6a70e6e0625eaf28bbb43c4c2ad4ee11d4"
+    },
+    "leftstep": {
+      "frames": 194,
+      "mean_position_error_m": 0.00962844118475914,
+      "max_position_error_m": 0.019963134080171585,
+      "peak_joint_speed_rad_s": 3.358928680419922,
+      "source_sha256": "b8ef70aea4c457819568d0bb86c3654a34cbc8679b7fd547666eca72597bfa5f"
+    },
+    "righthand": {
+      "frames": 246,
+      "mean_position_error_m": 0.011331404559314251,
+      "max_position_error_m": 0.04438041150569916,
+      "peak_joint_speed_rad_s": 6.985574722290039,
+      "source_sha256": "aa9804be66bc456e837442a39dff0d19df3a126e9a4f8dc9904028ba74f95813"
+    },
+    "rightjump": {
+      "frames": 200,
+      "mean_position_error_m": 0.011706972494721413,
+      "max_position_error_m": 0.06748103350400925,
+      "peak_joint_speed_rad_s": 8.619207382202148,
+      "source_sha256": "980581b31e0bad141c5437cd4611d979079772f2261d7fe584c74023baf8e71c"
+    },
+    "rightstep": {
+      "frames": 197,
+      "mean_position_error_m": 0.00950048677623272,
+      "max_position_error_m": 0.019379878416657448,
+      "peak_joint_speed_rad_s": 2.568511962890625,
+      "source_sha256": "e7642d1fbaccb0eb2a1e206bd58f0cb229ebcc72d502e223837aafa34069209e"
+    }
+  }
+}

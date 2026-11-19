@@ -1,0 +1,8 @@
+0 aaleft_shoulder_pitch_joint
+1 left_shoulder_roll_joint
+2 left_elbow_pitch_joint
+3 left_elbow_yaw_joint
+4 aaright_shoulder_pitch_joint
+5 right_shoulder_roll_joint
+6 right_elbow_pitch_joint
+7 right_elbow_yaw_joint

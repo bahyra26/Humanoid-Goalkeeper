@@ -40,6 +40,12 @@ from isaacgym import gymapi
 import torch
 
 def train(args):
+    if args.arm_amp:
+        if args.task != 'k1':
+            raise ValueError('--arm_amp requires --task k1')
+        env_cfg, train_cfg = task_registry.get_cfgs('k1')
+        env_cfg.amp.amp_coef = 0.1
+        train_cfg.amp = env_cfg.amp
     env, env_cfg = task_registry.make_env(name=args.task, args=args)
 
     if env.viewer is not None:
@@ -57,7 +63,8 @@ def train(args):
     ppo_runner.learn(num_learning_iterations=train_cfg.runner.max_iterations, init_at_random_ep_len=True)
 
 if __name__ == '__main__':
-    args = get_args()
+    args = get_args([{'name': '--arm_amp', 'action': 'store_true',
+                      'help': 'Enable the retargeted eight-joint K1 arm AMP prior.'}])
     if args.exptid is None:
         args.exptid = 'goalkeeper'
 

@@ -1,6 +1,8 @@
 import math
+import os
 import numpy as np
 from isaacgym import gymapi
+from legged_gym import LEGGED_GYM_ROOT_DIR
 
 def clamp(x, min_value, max_value):
     return max(min(x, max_value), min_value)
@@ -30,7 +32,7 @@ gym.add_ground(sim, plane_params)
 viewer = gym.create_viewer(sim, gymapi.CameraProperties())
 
 # Load K1 URDF
-asset_root = "/mnt/data/repos/Humanoid-Goalkeeper/legged_gym/resources/robots/k1"
+asset_root = os.path.join(LEGGED_GYM_ROOT_DIR, "resources/robots/k1")
 asset_file = "urdf/k1.urdf"
 
 asset_options = gymapi.AssetOptions()

@@ -1,0 +1,3033 @@
+{
+  "gema25_5400_vs_landfix_5350_all": {
+    "n": 4312,
+    "a_saves": 2079,
+    "b_saves": 2076,
+    "a_pct": 48.21,
+    "b_pct": 48.14,
+    "delta_saves": 3,
+    "delta_pp": 0.07,
+    "ci95_pp": [
+      -1.15,
+      1.29
+    ],
+    "a_only": 363,
+    "b_only": 360,
+    "ties": 3589
+  },
+  "gema25_5400_vs_gresume_5400_all": {
+    "n": 4312,
+    "a_saves": 2079,
+    "b_saves": 2048,
+    "a_pct": 48.21,
+    "b_pct": 47.5,
+    "delta_saves": 31,
+    "delta_pp": 0.72,
+    "ci95_pp": [
+      -0.47,
+      1.9
+    ],
+    "a_only": 355,
+    "b_only": 324,
+    "ties": 3633
+  },
+  "gema25_5450_vs_landfix_5350_all": {
+    "n": 4312,
+    "a_saves": 2112,
+    "b_saves": 2076,
+    "a_pct": 48.98,
+    "b_pct": 48.14,
+    "delta_saves": 36,
+    "delta_pp": 0.83,
+    "ci95_pp": [
+      -0.4,
+      2.07
+    ],
+    "a_only": 388,
+    "b_only": 352,
+    "ties": 3572
+  },
+  "gresume_5400_vs_landfix_5350_all": {
+    "n": 4312,
+    "a_saves": 2048,
+    "b_saves": 2076,
+    "a_pct": 47.5,
+    "b_pct": 48.14,
+    "delta_saves": -28,
+    "delta_pp": -0.65,
+    "ci95_pp": [
+      -1.86,
+      0.56
+    ],
+    "a_only": 338,
+    "b_only": 366,
+    "ties": 3608
+  },
+  "gema25_5400_vs_landfix_5350_high": {
+    "n": 1432,
+    "a_saves": 532,
+    "b_saves": 568,
+    "a_pct": 37.15,
+    "b_pct": 39.66,
+    "delta_saves": -36,
+    "delta_pp": -2.51,
+    "ci95_pp": [
+      -4.61,
+      -0.41
+    ],
+    "a_only": 100,
+    "b_only": 136,
+    "ties": 1196
+  },
+  "gema25_5400_vs_gresume_5400_high": {
+    "n": 1432,
+    "a_saves": 532,
+    "b_saves": 542,
+    "a_pct": 37.15,
+    "b_pct": 37.85,
+    "delta_saves": -10,
+    "delta_pp": -0.7,
+    "ci95_pp": [
+      -2.72,
+      1.32
+    ],
+    "a_only": 104,
+    "b_only": 114,
+    "ties": 1214
+  },
+  "gema25_5400_vs_landfix_5350_std": {
+    "n": 1080,
+    "a_saves": 885,
+    "b_saves": 875,
+    "a_pct": 81.94,
+    "b_pct": 81.02,
+    "delta_saves": 10,
+    "delta_pp": 0.93,
+    "ci95_pp": [
+      -1.62,
+      3.47
+    ],
+    "a_only": 103,
+    "b_only": 93,
+    "ties": 884
+  },
+  "gema25_5400_vs_gresume_5400_std": {
+    "n": 1080,
+    "a_saves": 885,
+    "b_saves": 845,
+    "a_pct": 81.94,
+    "b_pct": 78.24,
+    "delta_saves": 40,
+    "delta_pp": 3.7,
+    "ci95_pp": [
+      0.96,
+      6.45
+    ],
+    "a_only": 135,
+    "b_only": 95,
+    "ties": 850
+  },
+  "paired_landing_gema25_5400_vs_landfix_5350": {
+    "mutual_saves_total": 1716,
+    "mutual_save_both_stand": 1636,
+    "mutual_save_cand_stand_base_fall": 37,
+    "mutual_save_base_stand_cand_fall": 39,
+    "mutual_save_both_fall": 4,
+    "mutual_stand_2ft_both": 1006,
+    "mutual_stand_2ft_cand_only": 285,
+    "mutual_stand_2ft_base_only": 215,
+    "mutual_stand_2ft_neither": 130,
+    "all4320_cand_only_fall": 81,
+    "all4320_base_only_fall": 104,
+    "all4320_both_fall": 12,
+    "examples_cand_stand_base_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 140.3,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 36.0,
+          "bx": 3.57,
+          "by": 0.25,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 123.2,
+          "bx": 3.57,
+          "by": 0.25,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 107.6,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 67.8,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 58.5,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 53.9,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 85.6,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 90.3,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 79,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 97.4,
+          "bx": 3.67,
+          "by": 0.57,
+          "bz": 0.23
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 79,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 96.4,
+          "bx": 3.67,
+          "by": 0.57,
+          "bz": 0.23
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 34,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 74.2,
+          "bx": 5.0,
+          "by": 0.11,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 34,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 30.6,
+          "bx": 5.0,
+          "by": 0.11,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 85,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 36.8,
+          "bx": 5.0,
+          "by": -0.23,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 85,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.23,
+          "bz": 0.22
+        }
+      ]
+    ],
+    "examples_base_stand_cand_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 27,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 55.8,
+          "bx": 3.89,
+          "by": -0.59,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 27,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.89,
+          "by": -0.59,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 45,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 29.0,
+          "bx": 3.77,
+          "by": -0.78,
+          "bz": 0.18
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 45,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.77,
+          "by": -0.78,
+          "bz": 0.18
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 69,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 67.8,
+          "bx": 3.12,
+          "by": 0.42,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 69,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.12,
+          "by": 0.42,
+          "bz": 0.17
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 80,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.88,
+          "bz": 0.11
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 80,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.88,
+          "bz": 0.11
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 42.9,
+          "bx": 3.02,
+          "by": -0.86,
+          "bz": 0.21
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 76.5,
+          "bx": 3.02,
+          "by": -0.86,
+          "bz": 0.21
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 243,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.42,
+          "by": 0.79,
+          "bz": 0.15
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 243,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 22.3,
+          "bx": 3.42,
+          "by": 0.79,
+          "bz": 0.15
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 266,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 55.8,
+          "bx": 4.09,
+          "by": 0.25,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 266,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.09,
+          "by": 0.25,
+          "bz": 0.24
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.57,
+          "by": -0.81,
+          "bz": 0.19
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 71.2,
+          "bx": 3.57,
+          "by": -0.81,
+          "bz": 0.19
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 296,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 37.5,
+          "bx": 3.27,
+          "by": 0.15,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 296,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.27,
+          "by": 0.15,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 75,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 93.9,
+          "bx": 3.49,
+          "by": -0.12,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 75,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.49,
+          "by": -0.12,
+          "bz": 0.17
+        }
+      ]
+    ]
+  },
+  "paired_landing_gema25_5400_vs_gresume_5400": {
+    "mutual_saves_total": 1724,
+    "mutual_save_both_stand": 1661,
+    "mutual_save_cand_stand_base_fall": 23,
+    "mutual_save_base_stand_cand_fall": 35,
+    "mutual_save_both_fall": 5,
+    "mutual_stand_2ft_both": 1034,
+    "mutual_stand_2ft_cand_only": 271,
+    "mutual_stand_2ft_base_only": 219,
+    "mutual_stand_2ft_neither": 137,
+    "all4320_cand_only_fall": 82,
+    "all4320_base_only_fall": 78,
+    "all4320_both_fall": 11,
+    "examples_cand_stand_base_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 38,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 98.7,
+          "bx": 3.23,
+          "by": 0.37,
+          "bz": 0.14
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 38,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 36.9,
+          "bx": 3.23,
+          "by": 0.37,
+          "bz": 0.14
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 128,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 85.1,
+          "bx": 3.9,
+          "by": 0.19,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 128,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.9,
+          "by": 0.19,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 184,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 27.8,
+          "bx": 3.62,
+          "by": -0.76,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 184,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 159.0,
+          "bx": 3.62,
+          "by": -0.76,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 221,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.98,
+          "by": 0.06,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 221,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 111.6,
+          "bx": 3.98,
+          "by": 0.06,
+          "bz": 0.24
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 343,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.2,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 343,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.2,
+          "bz": 0.17
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "14ms_6m",
+          "eid": 197,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 15.2,
+          "bx": 6.0,
+          "by": 0.45,
+          "bz": 0.12
+        },
+        {
+          "seed": 1,
+          "mode": "14ms_6m",
+          "eid": 197,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 6.0,
+          "by": 0.45,
+          "bz": 0.12
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 15,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 72.1,
+          "bx": 3.26,
+          "by": 0.39,
+          "bz": 0.18
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 15,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.26,
+          "by": 0.39,
+          "bz": 0.18
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 98.0,
+          "bx": 3.2,
+          "by": 0.64,
+          "bz": 0.22
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.2,
+          "by": 0.64,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 272,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.48,
+          "by": 0.67,
+          "bz": 0.17
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 272,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 95.6,
+          "bx": 3.48,
+          "by": 0.67,
+          "bz": 0.17
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.63,
+          "by": -0.35,
+          "bz": 0.16
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 46.9,
+          "bx": 3.63,
+          "by": -0.35,
+          "bz": 0.16
+        }
+      ]
+    ],
+    "examples_base_stand_cand_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 27,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 55.8,
+          "bx": 3.89,
+          "by": -0.59,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 27,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 68.3,
+          "bx": 3.89,
+          "by": -0.59,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 45,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 29.0,
+          "bx": 3.77,
+          "by": -0.78,
+          "bz": 0.18
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 45,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.77,
+          "by": -0.78,
+          "bz": 0.18
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 69,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 67.8,
+          "bx": 3.12,
+          "by": 0.42,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 69,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.12,
+          "by": 0.42,
+          "bz": 0.17
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 80,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.88,
+          "bz": 0.11
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 80,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 93.4,
+          "bx": 3.99,
+          "by": 0.88,
+          "bz": 0.11
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 117,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 117.2,
+          "bx": 3.93,
+          "by": 0.82,
+          "bz": 0.16
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 117,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 312.7,
+          "bx": 3.93,
+          "by": 0.82,
+          "bz": 0.16
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 243,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.42,
+          "by": 0.79,
+          "bz": 0.15
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 243,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 90.2,
+          "bx": 3.42,
+          "by": 0.79,
+          "bz": 0.15
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 266,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 55.8,
+          "bx": 4.09,
+          "by": 0.25,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 266,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 101.5,
+          "bx": 4.09,
+          "by": 0.25,
+          "bz": 0.24
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.57,
+          "by": -0.81,
+          "bz": 0.19
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 273,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 32.8,
+          "bx": 3.57,
+          "by": -0.81,
+          "bz": 0.19
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 296,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 37.5,
+          "bx": 3.27,
+          "by": 0.15,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 296,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 47.6,
+          "bx": 3.27,
+          "by": 0.15,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 75,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 93.9,
+          "bx": 3.49,
+          "by": -0.12,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 75,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 69.7,
+          "bx": 3.49,
+          "by": -0.12,
+          "bz": 0.17
+        }
+      ]
+    ]
+  },
+  "paired_landing_gema25_5450_vs_landfix_5350": {
+    "mutual_saves_total": 1724,
+    "mutual_save_both_stand": 1612,
+    "mutual_save_cand_stand_base_fall": 38,
+    "mutual_save_base_stand_cand_fall": 69,
+    "mutual_save_both_fall": 5,
+    "mutual_stand_2ft_both": 984,
+    "mutual_stand_2ft_cand_only": 251,
+    "mutual_stand_2ft_base_only": 240,
+    "mutual_stand_2ft_neither": 137,
+    "all4320_cand_only_fall": 157,
+    "all4320_base_only_fall": 103,
+    "all4320_both_fall": 13,
+    "examples_cand_stand_base_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 63.9,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 140.3,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 67.8,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 57.3,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 90.9,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 90.3,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 79,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.67,
+          "by": 0.57,
+          "bz": 0.23
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 79,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 96.4,
+          "bx": 3.67,
+          "by": 0.57,
+          "bz": 0.23
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 97.5,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 34,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 85.6,
+          "bx": 5.0,
+          "by": 0.11,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 34,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 30.6,
+          "bx": 5.0,
+          "by": 0.11,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 85,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.23,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 85,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.23,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 81.1,
+          "bx": 5.0,
+          "by": 0.47,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": 0.47,
+          "bz": 0.24
+        }
+      ]
+    ],
+    "examples_base_stand_cand_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 0,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.5,
+          "by": 0.6,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 0,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.5,
+          "by": 0.6,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 14,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.32,
+          "by": -0.82,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 14,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 50.8,
+          "bx": 3.32,
+          "by": -0.82,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 39,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.76,
+          "by": -0.87,
+          "bz": 0.19
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 39,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 85.2,
+          "bx": 3.76,
+          "by": -0.87,
+          "bz": 0.19
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 74,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.39,
+          "by": -0.36,
+          "bz": 0.21
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 74,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 102.7,
+          "bx": 3.39,
+          "by": -0.36,
+          "bz": 0.21
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 133,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.5,
+          "by": 0.37,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 133,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 74.1,
+          "bx": 3.5,
+          "by": 0.37,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 157,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.27,
+          "by": -0.03,
+          "bz": 0.11
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 157,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 101.6,
+          "bx": 3.27,
+          "by": -0.03,
+          "bz": 0.11
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 158,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 64.3,
+          "bx": 3.14,
+          "by": -0.24,
+          "bz": 0.21
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 158,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 68.9,
+          "bx": 3.14,
+          "by": -0.24,
+          "bz": 0.21
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 203,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.02,
+          "by": -0.47,
+          "bz": 0.19
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 203,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 94.0,
+          "bx": 3.02,
+          "by": -0.47,
+          "bz": 0.19
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 225,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 87.7,
+          "bx": 3.22,
+          "by": -0.35,
+          "bz": 0.15
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 225,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 74.2,
+          "bx": 3.22,
+          "by": -0.35,
+          "bz": 0.15
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 354,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.85,
+          "by": -0.5,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 354,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 75.3,
+          "bx": 3.85,
+          "by": -0.5,
+          "bz": 0.13
+        }
+      ]
+    ]
+  },
+  "paired_landing_gresume_5400_vs_landfix_5350": {
+    "mutual_saves_total": 1710,
+    "mutual_save_both_stand": 1650,
+    "mutual_save_cand_stand_base_fall": 33,
+    "mutual_save_base_stand_cand_fall": 23,
+    "mutual_save_both_fall": 4,
+    "mutual_stand_2ft_both": 1014,
+    "mutual_stand_2ft_cand_only": 250,
+    "mutual_stand_2ft_base_only": 243,
+    "mutual_stand_2ft_neither": 143,
+    "all4320_cand_only_fall": 69,
+    "all4320_base_only_fall": 96,
+    "all4320_both_fall": 20,
+    "examples_cand_stand_base_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 18,
+          "reg": 0,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 140.3,
+          "bx": 4.03,
+          "by": 0.29,
+          "bz": 0.14
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 82.2,
+          "bx": 3.57,
+          "by": 0.25,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 123.2,
+          "bx": 3.57,
+          "by": 0.25,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 67,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 67.8,
+          "bx": 3.74,
+          "by": 0.61,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 29,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.29,
+          "bz": 0.16
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 37,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.69,
+          "by": 0.35,
+          "bz": 0.26
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 83.0,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 46,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 90.3,
+          "bx": 4.34,
+          "by": 0.49,
+          "bz": 0.2
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 271,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 4.22,
+          "by": 0.47,
+          "bz": 0.13
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": 0.47,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 159,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": 0.47,
+          "bz": 0.24
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 171,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 53.6,
+          "bx": 5.0,
+          "by": -0.02,
+          "bz": 0.12
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 171,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.02,
+          "bz": 0.12
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 319,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 82.6,
+          "bx": 5.0,
+          "by": 0.36,
+          "bz": 0.13
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 319,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 89.9,
+          "bx": 5.0,
+          "by": 0.36,
+          "bz": 0.13
+        }
+      ]
+    ],
+    "examples_base_stand_cand_fall": [
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 38,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 36.9,
+          "bx": 3.23,
+          "by": 0.37,
+          "bz": 0.14
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 38,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 104.5,
+          "bx": 3.23,
+          "by": 0.37,
+          "bz": 0.14
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 111,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 48.5,
+          "bx": 3.98,
+          "by": -0.58,
+          "bz": 0.23
+        },
+        {
+          "seed": 1,
+          "mode": "STD",
+          "eid": 111,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.98,
+          "by": -0.58,
+          "bz": 0.23
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 184,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 159.0,
+          "bx": 3.62,
+          "by": -0.76,
+          "bz": 0.22
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 184,
+          "reg": 4,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.62,
+          "by": -0.76,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 221,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 111.6,
+          "bx": 3.98,
+          "by": 0.06,
+          "bz": 0.24
+        },
+        {
+          "seed": 1,
+          "mode": "10ms",
+          "eid": 221,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 164.7,
+          "bx": 3.98,
+          "by": 0.06,
+          "bz": 0.24
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 343,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.2,
+          "bz": 0.17
+        },
+        {
+          "seed": 1,
+          "mode": "12ms_5m",
+          "eid": 343,
+          "reg": 1,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 5.0,
+          "by": -0.2,
+          "bz": 0.17
+        }
+      ],
+      [
+        {
+          "seed": 1,
+          "mode": "14ms_6m",
+          "eid": 197,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 6.0,
+          "by": 0.45,
+          "bz": 0.12
+        },
+        {
+          "seed": 1,
+          "mode": "14ms_6m",
+          "eid": 197,
+          "reg": 5,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 6.0,
+          "by": 0.45,
+          "bz": 0.12
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 15,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.26,
+          "by": 0.39,
+          "bz": 0.18
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 15,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 81.0,
+          "bx": 3.26,
+          "by": 0.39,
+          "bz": 0.18
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.2,
+          "by": 0.64,
+          "bz": 0.22
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 44,
+          "reg": 2,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 79.1,
+          "bx": 3.2,
+          "by": 0.64,
+          "bz": 0.22
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 93,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 61.8,
+          "bx": 3.99,
+          "by": 0.76,
+          "bz": 0.25
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 93,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.99,
+          "by": 0.76,
+          "bz": 0.25
+        }
+      ],
+      [
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 267,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": true,
+          "goal": false,
+          "two_ft": false,
+          "fz_min": 0.0,
+          "bx": 3.58,
+          "by": -0.62,
+          "bz": 0.23
+        },
+        {
+          "seed": 777,
+          "mode": "STD",
+          "eid": 267,
+          "reg": 3,
+          "on_target": true,
+          "blk": true,
+          "fall": false,
+          "goal": false,
+          "two_ft": true,
+          "fz_min": 76.7,
+          "bx": 3.58,
+          "by": -0.62,
+          "bz": 0.23
+        }
+      ]
+    ]
+  },
+  "audits": {
+    "landfix_5350": {
+      "tot_falls": 116,
+      "step_q": {
+        "min": 22,
+        "p25": 84,
+        "p50": 106,
+        "p75": 126,
+        "max": 147
+      },
+      "phases": {
+        "post_save_or_touch": 56,
+        "post_goal_miss": 60
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 52,
+        "post_goal_miss->goal": 60,
+        "post_save_or_touch->unr": 4
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 56,
+        "post_goal_miss|jumped_2ft_air": 60
+      },
+      "causes": {
+        "rapid_1step_hard|hard_tilt": 44,
+        "gradual_tilt/lowk|hard_tilt": 56,
+        "rapid_1step_hard|hard_force": 5,
+        "gradual_tilt/lowk|soft_no_reset": 10,
+        "gradual_tilt/lowk|hard_force": 1
+      },
+      "hard_terms": {
+        "excessive_tilt": 100,
+        "excessive_foot_force": 6
+      },
+      "modes": {
+        "STD|post_save_or_touch": 9,
+        "STD|post_goal_miss": 1,
+        "10ms|post_save_or_touch": 20,
+        "10ms|post_goal_miss": 18,
+        "12ms_5m|post_save_or_touch": 14,
+        "12ms_5m|post_goal_miss": 14,
+        "14ms_6m|post_goal_miss": 27,
+        "14ms_6m|post_save_or_touch": 13
+      },
+      "regs": {
+        "R0|post_goal_miss": 1,
+        "R0|post_save_or_touch": 2,
+        "R1|post_goal_miss": 21,
+        "R1|post_save_or_touch": 22,
+        "R2|post_goal_miss": 2,
+        "R2|post_save_or_touch": 8,
+        "R3|post_goal_miss": 29,
+        "R3|post_save_or_touch": 12,
+        "R4|post_goal_miss": 2,
+        "R4|post_save_or_touch": 4,
+        "R5|post_goal_miss": 5,
+        "R5|post_save_or_touch": 8
+      },
+      "nb_fall": {
+        "forearms": 25
+      },
+      "nb_stand": {
+        "forearms": 452
+      },
+      "tot_stand_saves": 2024,
+      "one_ft_stand_saves_at_s149": 494
+    },
+    "gresume_5400": {
+      "tot_falls": 89,
+      "step_q": {
+        "min": 44,
+        "p25": 88,
+        "p50": 106,
+        "p75": 116,
+        "max": 148
+      },
+      "phases": {
+        "post_save_or_touch": 37,
+        "post_goal_miss": 52
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 34,
+        "post_goal_miss->goal": 52,
+        "post_save_or_touch->unr": 3
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 37,
+        "post_goal_miss|jumped_2ft_air": 52
+      },
+      "causes": {
+        "rapid_1step_hard|hard_tilt": 33,
+        "gradual_tilt/lowk|hard_tilt": 44,
+        "gradual_tilt/lowk|soft_no_reset": 7,
+        "rapid_1step_hard|hard_force": 3,
+        "rapid_1step_hard|hard_knee": 2
+      },
+      "hard_terms": {
+        "excessive_tilt": 77,
+        "excessive_foot_force": 3,
+        "low_knee": 2
+      },
+      "modes": {
+        "STD|post_save_or_touch": 16,
+        "STD|post_goal_miss": 4,
+        "10ms|post_goal_miss": 15,
+        "10ms|post_save_or_touch": 8,
+        "12ms_5m|post_goal_miss": 17,
+        "12ms_5m|post_save_or_touch": 9,
+        "14ms_6m|post_goal_miss": 16,
+        "14ms_6m|post_save_or_touch": 4
+      },
+      "regs": {
+        "R0|post_goal_miss": 1,
+        "R1|post_goal_miss": 10,
+        "R1|post_save_or_touch": 6,
+        "R2|post_goal_miss": 5,
+        "R2|post_save_or_touch": 11,
+        "R3|post_goal_miss": 33,
+        "R3|post_save_or_touch": 14,
+        "R4|post_goal_miss": 2,
+        "R4|post_save_or_touch": 1,
+        "R5|post_goal_miss": 1,
+        "R5|post_save_or_touch": 5
+      },
+      "nb_fall": {
+        "forearms": 16
+      },
+      "nb_stand": {
+        "forearms": 436
+      },
+      "tot_stand_saves": 2014,
+      "one_ft_stand_saves_at_s149": 474
+    },
+    "gema25_5400": {
+      "tot_falls": 93,
+      "step_q": {
+        "min": 22,
+        "p25": 69,
+        "p50": 104,
+        "p75": 119,
+        "max": 147
+      },
+      "phases": {
+        "post_save_or_touch": 61,
+        "post_goal_miss": 32
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 52,
+        "post_goal_miss->goal": 32,
+        "post_save_or_touch->unr": 9
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 61,
+        "post_goal_miss|jumped_2ft_air": 32
+      },
+      "causes": {
+        "gradual_tilt/lowk|hard_tilt": 48,
+        "rapid_1step_hard|hard_tilt": 27,
+        "rapid_1step_hard|hard_knee": 1,
+        "rapid_1step_hard|hard_force": 12,
+        "gradual_tilt/lowk|soft_no_reset": 5
+      },
+      "hard_terms": {
+        "excessive_tilt": 75,
+        "low_knee": 1,
+        "excessive_foot_force": 12
+      },
+      "modes": {
+        "STD|post_save_or_touch": 29,
+        "STD|post_goal_miss": 6,
+        "10ms|post_goal_miss": 7,
+        "10ms|post_save_or_touch": 13,
+        "12ms_5m|post_save_or_touch": 9,
+        "12ms_5m|post_goal_miss": 5,
+        "14ms_6m|post_save_or_touch": 10,
+        "14ms_6m|post_goal_miss": 14
+      },
+      "regs": {
+        "R0|post_goal_miss": 3,
+        "R0|post_save_or_touch": 2,
+        "R1|post_goal_miss": 8,
+        "R1|post_save_or_touch": 9,
+        "R2|post_goal_miss": 7,
+        "R2|post_save_or_touch": 15,
+        "R3|post_goal_miss": 14,
+        "R3|post_save_or_touch": 26,
+        "R4|post_save_or_touch": 4,
+        "R5|post_save_or_touch": 5
+      },
+      "nb_fall": {
+        "forearms": 22
+      },
+      "nb_stand": {
+        "forearms": 538
+      },
+      "tot_stand_saves": 2027,
+      "one_ft_stand_saves_at_s149": 437
+    },
+    "gema25_5450": {
+      "tot_falls": 170,
+      "step_q": {
+        "min": 23,
+        "p25": 78,
+        "p50": 106,
+        "p75": 124,
+        "max": 149
+      },
+      "phases": {
+        "post_save_or_touch": 97,
+        "post_goal_miss": 72,
+        "post_miss_or_out": 1
+      },
+      "phase_out": {
+        "post_save_or_touch->blk": 91,
+        "post_goal_miss->goal": 72,
+        "post_save_or_touch->unr": 6,
+        "post_miss_or_out->out": 1
+      },
+      "jump": {
+        "post_save_or_touch|jumped_2ft_air": 97,
+        "post_goal_miss|jumped_2ft_air": 72,
+        "post_miss_or_out|jumped_2ft_air": 1
+      },
+      "causes": {
+        "rapid_1step_hard|hard_tilt": 48,
+        "gradual_tilt/lowk|hard_tilt": 104,
+        "gradual_tilt/lowk|soft_no_reset": 9,
+        "rapid_1step_hard|hard_force": 8,
+        "rapid_1step_hard|hard_knee": 1
+      },
+      "hard_terms": {
+        "excessive_tilt": 152,
+        "excessive_foot_force": 8,
+        "low_knee": 1
+      },
+      "modes": {
+        "STD|post_save_or_touch": 41,
+        "STD|post_goal_miss": 11,
+        "10ms|post_save_or_touch": 23,
+        "10ms|post_goal_miss": 29,
+        "10ms|post_miss_or_out": 1,
+        "12ms_5m|post_save_or_touch": 16,
+        "12ms_5m|post_goal_miss": 10,
+        "14ms_6m|post_goal_miss": 22,
+        "14ms_6m|post_save_or_touch": 17
+      },
+      "regs": {
+        "R0|post_goal_miss": 1,
+        "R0|post_save_or_touch": 3,
+        "R1|post_goal_miss": 25,
+        "R1|post_save_or_touch": 29,
+        "R2|post_goal_miss": 6,
+        "R2|post_save_or_touch": 20,
+        "R3|post_goal_miss": 27,
+        "R3|post_miss_or_out": 1,
+        "R3|post_save_or_touch": 21,
+        "R4|post_goal_miss": 4,
+        "R4|post_save_or_touch": 6,
+        "R5|post_goal_miss": 9,
+        "R5|post_save_or_touch": 18
+      },
+      "nb_fall": {
+        "forearms": 52
+      },
+      "nb_stand": {
+        "forearms": 570
+      },
+      "tot_stand_saves": 2021,
+      "one_ft_stand_saves_at_s149": 489
+    }
+  }
+}

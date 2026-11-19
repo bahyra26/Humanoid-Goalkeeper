@@ -145,6 +145,9 @@ class TaskRegistry():
             log_root = os.path.join(log_root, 'logs', train_cfg.runner.experiment_name)
             log_dir = os.path.join(log_root, args.exptid)
         
+        if log_dir is not None and not train_cfg.runner.resume and os.path.isdir(log_dir):
+            if any(name.startswith('model_') and name.endswith('.pt') for name in os.listdir(log_dir)):
+                raise FileExistsError(f'Checkpoint directory already exists: {log_dir}; use resume or a new exptid')
         train_cfg_dict = class_to_dict(train_cfg)
         runner = HIMOnPolicyRunner(env, train_cfg_dict, log_dir, device=args.rl_device)
         #save resume path before creating a new log_dir
