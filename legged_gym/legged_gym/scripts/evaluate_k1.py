@@ -12,6 +12,7 @@ import torch
 from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.envs import *
 from legged_gym.utils import get_args, task_registry, set_seed
+from legged_gym.utils.helpers import apply_k1_legacy_cfg
 from legged_gym.utils.recovery_diagnostics import summarize_recovery
 from legged_gym.utils.shot_outcome import shot_outcome_label
 
@@ -83,17 +84,19 @@ def main():
                       'help': 'Run only this CSV shot ID; use --gui to watch.'},
                      {'name': '--trace_motion', 'action': 'store_true',
                       'help': 'Record policy input, actions, joints and torso before each step.'},
-                     {'name': '--limit_joint_targets', 'action': 'store_true',
-                      'help': 'Test the existing URDF joint-target guard; simulation only.'},
+                     {'name': '--limit_joint_targets', 'action': 'store_true', 'default': None,
+                      'help': 'Force-enable the URDF joint-target guard; defaults to K1Cfg setting.'},
                      {'name': '--observe_recovery', 'action': 'store_true',
                       'help': 'Observe K1 for 8 seconds despite posture thresholds; save per-step trace.'},
                      {'name': '--no_paired', 'action': 'store_true',
                       'help': 'Skip headless no-keeper baseline replay used for on-target outcome split.'}])
     if args.ball_speed is not None:
-        raise ValueError('CSV evaluation uses vx/vy/vz from the shot file; use play_k1.py for --ball_speed')
+        raise ValueError('CSV evaluation uses vx/vy/vz from the shot file; use play_k1_size1.sh for --ball_speed')
     args.task = 'k1'
     if args.exptid is None:
         args.exptid = 'k1_v9_s1_landfix'
+        if not getattr(args, 'limit_joint_targets', False):
+            args.legacy = True
     args.num_envs = 1
     root = Path(LEGGED_GYM_ROOT_DIR).parent
     shot_file = Path(args.shot_file) if args.shot_file else root / 'evaluation/k1_sprint1_shots.csv'
@@ -108,12 +111,15 @@ def main():
     if output.exists():
         raise FileExistsError(f'Results already exist: {output}. Archive them before rerunning.')
     cfg, train_cfg = task_registry.get_cfgs(name='k1')
+    if getattr(args, 'legacy', False):
+        apply_k1_legacy_cfg(cfg)
     cfg.env.num_envs = 1
     cfg.env.play = True
     cfg.env.observe_recovery = args.observe_recovery
     cfg.env.episode_length_s = 8.0 if args.observe_recovery else 5.0
     cfg.noise.add_noise = False
-    cfg.control.limit_joint_targets = args.limit_joint_targets
+    if args.limit_joint_targets is not None:
+        cfg.control.limit_joint_targets = bool(args.limit_joint_targets)
     for name in dir(cfg.domain_rand):
         if name.startswith('randomize_') or name in ('push_robots', 'delay', 'continue_keep'):
             setattr(cfg.domain_rand, name, False)

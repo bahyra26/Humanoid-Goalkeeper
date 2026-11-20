@@ -10,7 +10,7 @@ Checkpoint asli `legged_gym/logs/k1/k1_v2/model_3400.pt` tidak berubah. SHA-256 
 ff0c6651a89326e061e69a252938c958a574bf3e0448963b285f78f41ba3d14c
 ```
 
-Run eksperimen disimpan di `legged_gym/logs/k1_calibration/`, terpisah dari direktori pencarian otomatis `play_k1.py`. Jangan menyebut checkpoint eksperimen sebagai model final.
+Run eksperimen disimpan di `legged_gym/logs/k1_calibration/`, terpisah dari direktori pencarian otomatis `play_k1_size1.sh`. Jangan menyebut checkpoint eksperimen sebagai model final.
 
 ## Protokol
 

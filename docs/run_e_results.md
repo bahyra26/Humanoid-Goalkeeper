@@ -1,6 +1,12 @@
 # Run E Evaluation, Tables, Plots, and IEEE Report Draft
 
-## Selected checkpoint for the report and demonstration
+## Selected final checkpoints for the report and demonstration
+
+### Final 2-policy release (`v11_6000 + walk_v5_2700`, plus `v13_5800` agile variant)
+
+Following Run G (`landfix_5350`), the final Booster K1 system adds a dedicated Policy 2 walk-back controller (`k1_walk`), a 70/30 standard-to-fast shot distribution, an upper-body URDF target clamp (`limit_targets_upper_only = True`, `0.0%` arm/head target overshoot), and a narrower anti-kolong ready stance (`hip_roll = ±0.04`, inner foot gap `14.6 cm < 15.0 cm` Size 1 ball). Across all three evaluation seeds (`1, 777, 2026`; `4,312` on-target shots), **`v11_6000`** saves **2,206 / 4,312 (`51.16%`, `+130` saves over `landfix_5350`)** and leads at every speed band: `82.96%` `STD` (`7 / 1,080` falls), `39.27%` at `10 m/s`, `42.59%` at `12 m/s`, and `39.72%` at `14 m/s`. The agile specialist **`v13_5800`** leads upper-corner saves (`573 / 1,432 = 40.01%`, `11/30` on `HIGH_GRID_30`) and achieves `238/240` `HOME` (`1` Policy 2 fall, `|da| = 0.0011`) in `12 s` 2-policy E2E evaluation with `walk_v5_2700`, while `v11_6000 + walk_v5_2700` achieves `230/240` `HOME` (`|da| = 0.0012`). [Final 3-seed benchmark](../evaluation/k1_v11_v13_allseeds_benchmark.json) · [2-policy E2E verification](../evaluation/k1_walk_v6_e2e.json) · [Checkpoint manifest](../evaluation/FINAL_CHECKPOINTS.json)
+
+### Prior Run G baseline (`landfix_5350`)
 
 Across evaluation seeds 1, 777 and 2026, `landfix_5350` saved 2,076 of 4,312 on-target shots (48.14%). Its parent, `nocollide_5200`, saved 2,008 (46.57%). The paired gain was 1.58 percentage points (95% CI 0.40–2.75). Falls decreased from 153 to 116 across 4,320 trials. Two-foot support at the final observation declined from 87.6% to 73.8%. [Benchmark](../evaluation/k1_g_allseeds_benchmark.json) · [Paired comparison](../evaluation/k1_g_paired_ci.json)
 

@@ -1,0 +1,242 @@
+{
+  "v11_6000+v5_2700": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 2,
+      "p2_falls": 2,
+      "entered_walk": 120,
+      "reached_home": 117,
+      "alive_end": 118,
+      "within_15cm_of_alive": "118/118",
+      "home_jitter_da": 0.0013,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 13.2,
+      "home_foot_inner_gap_cm": 5.3
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 8,
+      "p2_falls": 2,
+      "entered_walk": 114,
+      "reached_home": 113,
+      "alive_end": 112,
+      "within_15cm_of_alive": "112/112",
+      "home_jitter_da": 0.0012,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 13.4,
+      "home_foot_inner_gap_cm": 5.5
+    }
+  },
+  "v11_6000+v6_2800": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 5,
+      "p2_falls": 2,
+      "entered_walk": 117,
+      "reached_home": 115,
+      "alive_end": 115,
+      "within_15cm_of_alive": "115/115",
+      "home_jitter_da": 0.0008,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.4,
+      "home_foot_inner_gap_cm": 7.5
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 7,
+      "p2_falls": 1,
+      "entered_walk": 113,
+      "reached_home": 112,
+      "alive_end": 113,
+      "within_15cm_of_alive": "113/113",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.3,
+      "home_foot_inner_gap_cm": 7.4
+    }
+  },
+  "v11_6000+v6_2900": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 2,
+      "p2_falls": 0,
+      "entered_walk": 118,
+      "reached_home": 118,
+      "alive_end": 118,
+      "within_15cm_of_alive": "118/118",
+      "home_jitter_da": 0.0008,
+      "init_foot_center_gap_cm": 22.6,
+      "init_foot_inner_gap_cm": 14.7,
+      "home_foot_center_gap_cm": 15.0,
+      "home_foot_inner_gap_cm": 7.1
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 8,
+      "p2_falls": 1,
+      "entered_walk": 113,
+      "reached_home": 112,
+      "alive_end": 112,
+      "within_15cm_of_alive": "112/112",
+      "home_jitter_da": 0.0008,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.1,
+      "home_foot_inner_gap_cm": 7.2
+    }
+  },
+  "v11_6000+v6_3000": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 2,
+      "p2_falls": 1,
+      "entered_walk": 119,
+      "reached_home": 116,
+      "alive_end": 118,
+      "within_15cm_of_alive": "116/118",
+      "home_jitter_da": 0.0009,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.2,
+      "home_foot_inner_gap_cm": 7.3
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 8,
+      "p2_falls": 2,
+      "entered_walk": 115,
+      "reached_home": 112,
+      "alive_end": 112,
+      "within_15cm_of_alive": "112/112",
+      "home_jitter_da": 0.0008,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 14.9,
+      "home_foot_inner_gap_cm": 7.0
+    }
+  },
+  "v13_5800+v5_2700": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 0,
+      "p2_falls": 0,
+      "entered_walk": 119,
+      "reached_home": 119,
+      "alive_end": 120,
+      "within_15cm_of_alive": "119/120",
+      "home_jitter_da": 0.0012,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 13.8,
+      "home_foot_inner_gap_cm": 5.9
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 1,
+      "p2_falls": 1,
+      "entered_walk": 120,
+      "reached_home": 119,
+      "alive_end": 119,
+      "within_15cm_of_alive": "119/119",
+      "home_jitter_da": 0.0011,
+      "init_foot_center_gap_cm": 22.6,
+      "init_foot_inner_gap_cm": 14.7,
+      "home_foot_center_gap_cm": 15.1,
+      "home_foot_inner_gap_cm": 7.2
+    }
+  },
+  "v13_5800+v6_2800": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 2,
+      "p2_falls": 2,
+      "entered_walk": 120,
+      "reached_home": 116,
+      "alive_end": 118,
+      "within_15cm_of_alive": "118/118",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.2,
+      "home_foot_inner_gap_cm": 7.3
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 1,
+      "p2_falls": 1,
+      "entered_walk": 120,
+      "reached_home": 119,
+      "alive_end": 119,
+      "within_15cm_of_alive": "119/119",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.7,
+      "home_foot_inner_gap_cm": 7.8
+    }
+  },
+  "v13_5800+v6_2900": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 5,
+      "p2_falls": 5,
+      "entered_walk": 120,
+      "reached_home": 115,
+      "alive_end": 115,
+      "within_15cm_of_alive": "115/115",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 14.9,
+      "home_foot_inner_gap_cm": 7.0
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 3,
+      "p2_falls": 2,
+      "entered_walk": 119,
+      "reached_home": 116,
+      "alive_end": 117,
+      "within_15cm_of_alive": "117/117",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.5,
+      "init_foot_inner_gap_cm": 14.6,
+      "home_foot_center_gap_cm": 15.0,
+      "home_foot_inner_gap_cm": 7.1
+    }
+  },
+  "v13_5800+v6_3000": {
+    "STD": {
+      "shots": 120,
+      "total_falls": 2,
+      "p2_falls": 1,
+      "entered_walk": 119,
+      "reached_home": 116,
+      "alive_end": 118,
+      "within_15cm_of_alive": "118/118",
+      "home_jitter_da": 0.0008,
+      "init_foot_center_gap_cm": 22.6,
+      "init_foot_inner_gap_cm": 14.7,
+      "home_foot_center_gap_cm": 14.2,
+      "home_foot_inner_gap_cm": 6.3
+    },
+    "12ms_5m": {
+      "shots": 120,
+      "total_falls": 3,
+      "p2_falls": 0,
+      "entered_walk": 117,
+      "reached_home": 116,
+      "alive_end": 117,
+      "within_15cm_of_alive": "116/117",
+      "home_jitter_da": 0.0007,
+      "init_foot_center_gap_cm": 22.6,
+      "init_foot_inner_gap_cm": 14.7,
+      "home_foot_center_gap_cm": 16.1,
+      "home_foot_inner_gap_cm": 8.2
+    }
+  }
+}

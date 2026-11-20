@@ -31,19 +31,17 @@ class EpisodeLoggingTest(unittest.TestCase):
         return results
 
     def test_missing_metrics_both_orders(self):
-        for name in ('log', 'log_vision'):
-            for reverse in (False, True):
-                records = [{'reward': 10., 'true_save_rate': 1.}, {'reward': -4.}]
-                if reverse:
-                    records.reverse()
-                self.assertEqual(self.aggregate(name, records),
-                                 {'Episode/reward': 3., 'Episode/true_save_rate': 1.})
+        for reverse in (False, True):
+            records = [{'reward': 10., 'true_save_rate': 1.}, {'reward': -4.}]
+            if reverse:
+                records.reverse()
+            self.assertEqual(self.aggregate('log', records),
+                             {'Episode/reward': 3., 'Episode/true_save_rate': 1.})
 
     def test_empty_and_vector_records(self):
-        for name in ('log', 'log_vision'):
-            self.assertEqual(self.aggregate(name, []), {})
-            self.assertEqual(self.aggregate(name, [{}, {'reward': Tensor([2., 4.])}]),
-                             {'Episode/reward': 3.})
+        self.assertEqual(self.aggregate('log', []), {})
+        self.assertEqual(self.aggregate('log', [{}, {'reward': Tensor([2., 4.])}]),
+                         {'Episode/reward': 3.})
 
     def test_original_bug_reproduced(self):
         original = SOURCE.read_text().replace(

@@ -16,42 +16,7 @@ from isaacgym.torch_utils import (
 from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.envs.base.base_task import BaseTask
 from legged_gym.utils.helpers import class_to_dict
-
-
-def build_walk_one_step_obs(
-    commands,
-    gait_sin_cos,
-    base_ang_vel,
-    projected_gravity,
-    dof_pos_err,
-    dof_vel,
-    actions,
-    cmd_scales=(2.0, 2.0, 0.25),
-    ang_vel_scale=0.25,
-    dof_pos_scale=1.0,
-    dof_vel_scale=0.05,
-):
-    """Single source of truth for Policy 2 (k1_walk) 77-dim one-step actor observation."""
-    scaled_cmd = torch.stack(
-        (
-            commands[:, 0] * cmd_scales[0],
-            commands[:, 1] * cmd_scales[1],
-            commands[:, 2] * cmd_scales[2],
-        ),
-        dim=-1,
-    )
-    return torch.cat(
-        (
-            scaled_cmd,
-            gait_sin_cos,
-            base_ang_vel * ang_vel_scale,
-            projected_gravity,
-            dof_pos_err * dof_pos_scale,
-            dof_vel * dof_vel_scale,
-            actions,
-        ),
-        dim=-1,
-    )
+from legged_gym.utils.k1_two_policy import build_walk_obs_step as build_walk_one_step_obs
 
 
 class K1WalkEnv(BaseTask):
@@ -424,10 +389,16 @@ class K1WalkEnv(BaseTask):
         actions_scaled = actions * self.action_scale_vec
         target = self.default_dof_pos + actions_scaled
         if getattr(self.cfg.control, "limit_joint_targets", False):
-            target = torch.maximum(
+            clamped = torch.maximum(
                 torch.minimum(target, self.hard_dof_pos_limits[:, 1]),
                 self.hard_dof_pos_limits[:, 0],
             )
+            # Match Policy 1 (K1 env): upper-only keeps legs free of target clamp.
+            if getattr(self.cfg.control, "limit_targets_upper_only", False):
+                free_legs = torch.ones_like(clamped, dtype=torch.bool)
+                free_legs[:, self.upper_body_joint_indices] = False
+                clamped = torch.where(free_legs, target, clamped)
+            target = clamped
         torques = self.p_gains * self.Kp_factors * (target - self.dof_pos) - self.d_gains * self.Kd_factors * self.dof_vel
         torques = torques + self.actuation_offset + self.joint_injection
         return torch.clip(torques, -self.torque_limits, self.torque_limits)

@@ -8,7 +8,23 @@ if [[ -n ${CONDA_PREFIX:-} ]]; then
 fi
 
 if [[ ${1:-} != --check ]]; then
-    set -- --gui --exptid k1_v9_s1_landfix --checkpoint 5350 --num_envs 1 "$@"
+    has_walk=0
+    [[ " $* " == *" --walk_ckpt "* ]] && has_walk=1
+    if [[ " $* " == *" --legacy "* ]]; then
+        extra=()
+        if [[ $has_walk -eq 0 && -f legged_gym/logs/k1_walk/k1_walk_v4/model_2400.pt ]]; then
+            extra=(--walk_ckpt legged_gym/logs/k1_walk/k1_walk_v4/model_2400.pt)
+        fi
+        set -- --gui --exptid k1_v9_s1_landfix --checkpoint 5350 --num_envs 1 "${extra[@]}" "$@"
+    elif [[ -f legged_gym/logs/k1/k1_v11_balanced_p2/model_6000.pt ]]; then
+        extra=()
+        if [[ $has_walk -eq 0 && -f legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt ]]; then
+            extra=(--walk_ckpt legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt)
+        fi
+        set -- --gui --exptid k1_v11_balanced_p2 --checkpoint 6000 --num_envs 1 "${extra[@]}" "$@"
+    else
+        set -- --gui --legacy --exptid k1_v9_s1_landfix --checkpoint 5350 --num_envs 1 "$@"
+    fi
 fi
 
 # python -c membiarkan stdin tersedia untuk kontrol interaktif viewer.

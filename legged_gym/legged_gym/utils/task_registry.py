@@ -29,6 +29,7 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
 import os
+from copy import deepcopy
 from datetime import datetime
 from typing import Tuple
 import torch
@@ -57,8 +58,8 @@ class TaskRegistry():
         return self.task_classes[name]
     
     def get_cfgs(self, name) -> Tuple[LeggedRobotCfg, LeggedRobotCfgPPO]:
-        train_cfg = self.train_cfgs[name]
-        env_cfg = self.env_cfgs[name]
+        train_cfg = deepcopy(self.train_cfgs[name])
+        env_cfg = deepcopy(self.env_cfgs[name])
         # copy seed
         env_cfg.seed = train_cfg.seed
         return env_cfg, train_cfg

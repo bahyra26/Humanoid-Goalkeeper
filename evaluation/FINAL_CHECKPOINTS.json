@@ -1,0 +1,35 @@
+{
+  "note": "Checkpoints are stored locally outside Git (legged_gym/logs/ is gitignored).",
+  "checkpoints": {
+    "policy1_balanced_default": {
+      "path": "legged_gym/logs/k1/k1_v11_balanced_p2/model_6000.pt",
+      "local_backup": "legged_gym/logs/final_release/policy1_balanced_default.pt",
+      "size_bytes": 9701546,
+      "sha256": "0a5d2f2adfb938fd6c217ed704d5d5daa9ca576fc9799dc18eeaf11f8f70b8df"
+    },
+    "policy1_agile_high_corner": {
+      "path": "legged_gym/logs/k1/k1_v13_agile/model_5800.pt",
+      "local_backup": "legged_gym/logs/final_release/policy1_agile_high_corner.pt",
+      "size_bytes": 9701546,
+      "sha256": "d0c010e6c09b58a497eb57be0eda58ebb9c6eaea73a37b13c74ecca55941b825"
+    },
+    "policy2_walk_default": {
+      "path": "legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt",
+      "local_backup": "legged_gym/logs/final_release/policy2_walk_default.pt",
+      "size_bytes": 5816418,
+      "sha256": "d3b5a239fe3c29a7b176586dba891c4427f2bfbdd6ce1eb6d0487ed1c93f0611"
+    },
+    "policy1_legacy_run_g": {
+      "path": "legged_gym/logs/k1/k1_v9_s1_landfix/model_5350.pt",
+      "local_backup": "legged_gym/logs/final_release/policy1_legacy_run_g.pt",
+      "size_bytes": 9701546,
+      "sha256": "4437205baf8094061750761f7fa74e7678bbb77fb1999062da47203976fe055b"
+    },
+    "policy2_legacy_walk_v4": {
+      "path": "legged_gym/logs/k1_walk/k1_walk_v4/model_2400.pt",
+      "local_backup": "legged_gym/logs/final_release/policy2_legacy_walk_v4.pt",
+      "size_bytes": 5816418,
+      "sha256": "7d41da3de15156fc15ff686debcac64a13a6b05382d9b7d32c3e9bce6806d4a1"
+    }
+  }
+}

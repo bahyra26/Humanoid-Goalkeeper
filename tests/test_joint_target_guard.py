@@ -56,3 +56,45 @@ class TargetGuardTests(unittest.TestCase):
         env.upper_body_joint_indices = torch.tensor([0])
         scope['_compute_torques'](env, action)
         torch.testing.assert_close(env.joint_pos_target, torch.tensor([[1.2, -3.]]))
+
+        # K1WalkEnv._compute_torques applies the identical upper-only hard-limit clamp.
+        walk_path = Path(__file__).resolve().parents[1] / 'legged_gym/legged_gym/envs/k1/k1_walk.py'
+        walk_method = next(n for n in ast.walk(ast.parse(walk_path.read_text()))
+                           if isinstance(n, ast.FunctionDef) and n.name == '_compute_torques')
+        walk_scope = {'torch': torch}
+        exec(compile(ast.Module(body=[walk_method], type_ignores=[]), str(walk_path), 'exec'), walk_scope)
+        wenv = NS(cfg=NS(control=NS(limit_joint_targets=True, limit_targets_upper_only=True)),
+                  action_scale_vec=torch.ones(2), default_dof_pos=torch.zeros(1, 2),
+                  hard_dof_pos_limits=torch.tensor([[-1.2, 1.2], [-.6, .6]]),
+                  upper_body_joint_indices=torch.tensor([0]),
+                  p_gains=10., Kp_factors=1., d_gains=1., Kd_factors=1.,
+                  dof_pos=torch.zeros(1, 2), dof_vel=torch.zeros(1, 2),
+                  actuation_offset=0., joint_injection=0., torque_limits=torch.tensor([50., 50.]))
+        wtorque = walk_scope['_compute_torques'](wenv, action)
+        torch.testing.assert_close(wtorque, torch.tensor([[12., -30.]]))
+
+        # apply_k1_legacy_cfg restores +-0.10 stance and disables target clamp without mutating registry copies.
+        helpers_path = Path(__file__).resolve().parents[1] / 'legged_gym/legged_gym/utils/helpers.py'
+        legacy_fn = next(n for n in ast.walk(ast.parse(helpers_path.read_text()))
+                         if isinstance(n, ast.FunctionDef) and n.name == 'apply_k1_legacy_cfg')
+        hscope = {}
+        exec(compile(ast.Module(body=[legacy_fn], type_ignores=[]), str(helpers_path), 'exec'), hscope)
+        reg_path = Path(__file__).resolve().parents[1] / 'legged_gym/legged_gym/utils/task_registry.py'
+        get_cfgs_fn = next(n for n in ast.walk(ast.parse(reg_path.read_text()))
+                           if isinstance(n, ast.FunctionDef) and n.name == 'get_cfgs')
+        from copy import deepcopy
+        from typing import Tuple
+        rscope = {'deepcopy': deepcopy, 'Tuple': Tuple, 'LeggedRobotCfg': object, 'LeggedRobotCfgPPO': object}
+        exec(compile(ast.Module(body=[get_cfgs_fn], type_ignores=[]), str(reg_path), 'exec'), rscope)
+        base_cfg = NS(seed=1, control=NS(limit_joint_targets=True, limit_targets_upper_only=True),
+                      init_state=NS(default_joint_angles={'left_hip_roll_joint': 0.04, 'left_ankle_roll_joint': -0.04,
+                                                          'right_hip_roll_joint': -0.04, 'right_ankle_roll_joint': 0.04},
+                                    init_pos=[0.0] * 22))
+        reg = NS(env_cfgs={'k1': base_cfg}, train_cfgs={'k1': NS(seed=1)})
+        c1, _ = rscope['get_cfgs'](reg, 'k1')
+        hscope['apply_k1_legacy_cfg'](c1)
+        self.assertFalse(c1.control.limit_joint_targets)
+        self.assertEqual(c1.init_state.default_joint_angles['left_hip_roll_joint'], 0.10)
+        c2, _ = rscope['get_cfgs'](reg, 'k1')
+        self.assertTrue(c2.control.limit_joint_targets)
+        self.assertEqual(c2.init_state.default_joint_angles['left_hip_roll_joint'], 0.04)

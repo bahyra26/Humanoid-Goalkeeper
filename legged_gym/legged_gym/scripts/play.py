@@ -37,6 +37,7 @@ import math
 import isaacgym
 from legged_gym.envs import *
 from legged_gym.utils import get_args, export_policy_as_jit, export_jit_to_onnx, load_onnx_policy, task_registry
+from legged_gym.utils.helpers import apply_k1_legacy_cfg
 from isaacgym import gymtorch, gymapi, gymutil
 import torch
 import faulthandler
@@ -54,14 +55,7 @@ def play(args):
     if getattr(args, 'legacy', False):
         if args.task != 'k1':
             raise ValueError('--legacy is supported only for --task k1')
-        # Original stance (hip/ankle roll +-0.10) and no target clamp, as older checkpoints were trained.
-        env_cfg.control.limit_joint_targets = False
-        init = env_cfg.init_state
-        for name, v in (('left_hip_roll_joint', 0.10), ('left_ankle_roll_joint', -0.10),
-                        ('right_hip_roll_joint', -0.10), ('right_ankle_roll_joint', 0.10)):
-            init.default_joint_angles[name] = v
-        init.init_pos = list(init.init_pos)
-        init.init_pos[11], init.init_pos[15], init.init_pos[17], init.init_pos[21] = 0.10, -0.10, -0.10, 0.10
+        apply_k1_legacy_cfg(env_cfg)
         print('[LEGACY] stance hip/ankle roll +-0.10, limit_joint_targets=False')
     env_cfg.env.num_envs = 6 if getattr(args, 'num_envs', None) is None else args.num_envs
     env_cfg.sim.physx.max_gpu_contact_pairs = 2**17
@@ -406,13 +400,23 @@ def play(args):
                 if bool(dones[0]):
                     prev_ctrl_state0 = 0
         if args.task == 'k1' and not shot_outcome_printed:
-            bx0 = float(env.ball_states[0, 0] - env.env_origins[0, 0])
-            by0 = float(env.ball_states[0, 1] - env.env_origins[0, 1])
-            bz0 = float(env.ball_states[0, 2] - env.env_origins[0, 2])
-            if env.goal_conceded_flag[0] > 0:
+            sr = infos.get('shot_results') if bool(dones[0]) else None
+            if sr is not None and len(sr.get('env_ids', ())) > 0 and int(sr['env_ids'][0].item()) == 0:
+                bx0 = float(sr['final_ball_x_m'][0].item())
+                by0 = float(sr['final_ball_y_m'][0].item())
+                bz0 = float(sr['final_ball_z_m'][0].item())
+                is_goal = bool(sr['goal'][0].item())
+                is_save = bool(sr['save'][0].item()) and not is_goal
+            else:
+                bx0 = float(env.ball_states[0, 0] - env.env_origins[0, 0])
+                by0 = float(env.ball_states[0, 1] - env.env_origins[0, 1])
+                bz0 = float(env.ball_states[0, 2] - env.env_origins[0, 2])
+                is_goal = bool(env.goal_conceded_flag[0] > 0)
+                is_save = bool(env._k1_ball_safe()[0])
+            if is_goal:
                 print(f"🥅 [HASIL] GOL! Bola masuk gawang (X={bx0:.2f}m, Y={by0:+.2f}m, Z={bz0:.2f}m)")
                 shot_outcome_printed = True
-            elif bool(env._k1_ball_safe()[0]):
+            elif is_save:
                 print(f"🧤 [HASIL] SAVE! Bola berhasil ditepis/ditahan (X={bx0:.2f}m, Y={by0:+.2f}m, Z={bz0:.2f}m)")
                 shot_outcome_printed = True
             elif bx0 < (env.cfg.goal.line_x - env.cfg.goal.ball_radius):

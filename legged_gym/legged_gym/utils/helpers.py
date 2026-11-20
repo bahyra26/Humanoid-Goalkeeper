@@ -163,6 +163,22 @@ def get_load_path(root, load_run=-1, checkpoint=-1, model_name_include="model"):
     return load_path
 
 
+def apply_k1_legacy_cfg(env_cfg):
+    """Restore original K1 stance (hip/ankle roll +-0.10) and disable PD target clamping for legacy checkpoints."""
+    env_cfg.control.limit_joint_targets = False
+    env_cfg.control.limit_targets_upper_only = False
+    init = env_cfg.init_state
+    for name, v in (
+        ('left_hip_roll_joint', 0.10),
+        ('left_ankle_roll_joint', -0.10),
+        ('right_hip_roll_joint', -0.10),
+        ('right_ankle_roll_joint', 0.10),
+    ):
+        init.default_joint_angles[name] = v
+    init.init_pos = list(init.init_pos)
+    init.init_pos[11], init.init_pos[15], init.init_pos[17], init.init_pos[21] = 0.10, -0.10, -0.10, 0.10
+
+
 def update_cfg_from_args(env_cfg, cfg_train, args):
     # seed
     if env_cfg is not None:

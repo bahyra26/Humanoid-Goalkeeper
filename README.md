@@ -4,51 +4,53 @@
 
 I prepared this adaptation for a research internship with ICHIRO, the humanoid robot soccer team at Institut Teknologi Sepuluh Nopember (ITS). The question behind the experiments was simple: how often can a simulated Booster K1 stop a shot and still finish on its feet?
 
-The starting point was the Unitree G1 goalkeeper framework released by Junli Ren and colleagues. This repository documents the work specific to the 22-joint Booster K1: adapting the robot and ball configuration, generating shots, detecting goals, tuning the rewards for blocking and landing, and comparing policies on the same shots. All K1 results below come from NVIDIA Isaac Gym. [Original implementation](https://github.com/InternRobotics/Humanoid-Goalkeeper) · [K1 environment configuration](legged_gym/legged_gym/envs/k1/k1_config.py)
+The starting point was the Unitree G1 goalkeeper framework released by Junli Ren and colleagues. This repository documents the work specific to the 22-joint Booster K1: adapting the robot and ball configuration, generating shots, detecting goals, tuning rewards for balanced blocking and safe upper-body limits, adding a dedicated Policy 2 walk-back controller (`k1_walk`), and comparing policies on identical shots. All K1 results below come from NVIDIA Isaac Gym. [Original implementation](https://github.com/InternRobotics/Humanoid-Goalkeeper) · [K1 environment configuration](legged_gym/legged_gym/envs/k1/k1_config.py) · [Two-policy controller](legged_gym/legged_gym/utils/k1_two_policy.py)
 
 ## Simulation gallery
 
-Four verified standing saves from `landfix_5350` with the 15 cm (200 g) Size 1 ball and the 2.60 × 1.20 m goal frame, grouped by launch speed band.
+Four verified standing saves from the final 2-policy release (`v11_6000 + walk_v5_2700`) with the 15 cm (200 g) Size 1 ball and the 2.60 × 1.20 m goal frame, grouped by launch speed band.
 
-### Standard speed range (`~5.5–9.0 m/s`, launch `3.0–4.4 m` · `81.02%` saves)
+### Standard speed range (`~5.5–9.0 m/s`, launch `3.0–4.4 m` · `82.96%` final / `81.02%` Run G)
 
-| Mid-left arm parry (`7.5 m/s` from `3.5 m`) | Low shin block (`8.0 m/s` from `3.5 m`) |
+| Mid-left shoulder parry (`7.5 m/s` from `3.5 m`) | Low shin block (`8.0 m/s` from `3.5 m`) |
 |:---:|:---:|
-| ![Booster K1 shifting left in a wide stance to parry a 7.5 m/s mid-height shot at shoulder level](docs/k1_mid_parry.png) | ![Booster K1 planting both feet to block an 8.0 m/s low center shot with its lower leg](docs/k1_low_parry.png) |
+| ![Booster K1 shifting left to parry a 7.5 m/s mid-height shot at shoulder level](docs/k1_mid_parry.png) | ![Booster K1 planting both feet to block an 8.0 m/s low center shot with its lower leg](docs/k1_low_parry.png) |
 | Target `y = +0.45 m, z = 0.72 m` · standing two-foot save | Target `y = +0.05 m, z = 0.20 m` · standing two-foot save |
 
-### High-speed range (`10–14 m/s`, launch `3.0–6.0 m` · `33.70%–40.83%` saves)
+### High-speed range (`10–14 m/s`, launch `3.0–6.0 m` · `39.27%–42.59%` final / `33.70%–40.83%` Run G)
 
-| High-corner overhead parry (`10.0 m/s` from `4.0 m`) | Fast right-side lateral parry (`12.0 m/s` from `5.0 m`) |
+| High-corner left-arm parry (`10.0 m/s` from `4.0 m`) | Fast right-side lateral parry (`12.0 m/s` from `5.0 m`) |
 |:---:|:---:|
-| ![Booster K1 leaping to parry a 10.0 m/s upper-left corner shot with its extended left hand inside the 2.60 x 1.20 m goal](docs/k1_high_parry.png) | ![Booster K1 leaping laterally to deflect a 12.0 m/s right-side shot with its extended right arm](docs/k1_right_parry.png) |
-| Target `y = +0.65 m, z = 1.05 m` · standing two-foot save | Target `y = −0.60 m, z = 0.78 m` · standing save |
+| ![Booster K1 shifting and reaching up to parry a 10.0 m/s upper-left shot with its extended left arm inside the 2.60 x 1.20 m goal](docs/k1_high_parry.png) | ![Booster K1 deflecting a 12.0 m/s right-side shot with its extended right arm](docs/k1_right_parry.png) |
+| Target `y = +0.55 m, z = 0.95 m` · standing save | Target `y = −0.60 m, z = 0.78 m` · standing save |
 
 ## Results
 
-**The demo uses `landfix_5350`.** It saved 875 of 1,080 standard shots (81.02%). Across all shot speeds, including shots up to 14 m/s, it saved 2,076 of 4,312 on-target attempts (48.14%). Upper corners were harder: it stopped 568 of 1,432 (39.66%). The simulated goal measured 2.60 × 1.20 m. The ball weighed 200 g and measured 15 cm in diameter. [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Run G results](evaluation/k1_g_allseeds_benchmark.json)
+**The final demo uses the 2-policy pair `v11_6000 + walk_v5_2700`.** Across all three evaluation seeds (`1, 777, 2026`), `v11_6000` saved **896 of 1,080 standard shots (`82.96%`, only `7` falls)** and **2,206 of 4,312 on-target attempts (`51.16%`, `+130` saves over Run G `landfix_5350`)** spanning standard through `14 m/s` shots. It enforces `0.0%` upper-body PD target overshoot beyond URDF hard stops (`limit_targets_upper_only = True`), closes the standing five-hole (*kolong*) inner foot gap from `18.7 cm` to `14.6 cm` (`< 15.0 cm` Size 1 ball), and hands off after ball clearance to Policy 2 (`k1_walk_v5/model_2700.pt`) to walk back calmly to goal center. The simulated goal measured `2.60 × 1.20 m`, and the Size 1 ball weighed `200 g` (`15 cm` diameter). [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Final 3-seed results](evaluation/k1_v11_v13_allseeds_benchmark.json) · [Run G results](evaluation/k1_g_allseeds_benchmark.json) · [Checkpoint manifest](evaluation/FINAL_CHECKPOINTS.json)
 
-| Checkpoint | Random saves / 4,312 on target | Upper-corner saves / 1,432 | Falls / 4,320 trials | Fixed-shot saves / 69 |
+| Checkpoint | Random saves / 4,312 on target | Upper-corner saves / 1,432 | `STD` falls / 1,080 | Fixed-shot saves / 69 |
 |---|---:|---:|---:|---:|
-| `v9_5000` (baseline) | 1,931 (44.78%) | 414 | 70 | 28 |
-| `nocollide_5200` (Run F) | 2,008 (46.57%) | 522 | 153 | 40 |
-| **`landfix_5350` (Run G, demo)** | **2,076 (48.14%)** | **568** | 116 | **47** |
-| `gema25_5400` (Run I, EMA ablation) | 2,079 (48.21%) | 532 | 93 | 46 |
+| `v9_5000` (baseline) | 1,931 (44.78%) | 414 (28.91%) | 7 | 28 |
+| `nocollide_5200` (Run F) | 2,008 (46.57%) | 522 (36.45%) | 30 | 40 |
+| `landfix_5350` (Run G, `--legacy`) | 2,076 (48.14%) | 568 (39.66%) | 10 | **47** |
+| `gema25_5400` (Run I, EMA ablation) | 2,079 (48.21%) | 532 (37.15%) | 7 | 46 |
+| **`v11_6000` (Final balanced, default demo)** | **2,206 (51.16%)** | 524 (36.59%) | **7** | 39 |
+| `v13_5800` (Agile high-corner specialist) | 1,938 (44.94%) | **573 (40.01%)** | 62 | 44 |
 
-Per-speed breakdown for **`landfix_5350`** across all three evaluation seeds (`1, 777, 2026`):
+Per-speed breakdown for the final policy **`v11_6000`** vs legacy **`landfix_5350`** across all three evaluation seeds (`1, 777, 2026`):
 
-| Speed range | Launch distance | Saves / on-target shots | Save rate | Falls / 1,080 trials |
-|---|---|---:|---:|---:|
-| Standard (`~5.5–9.0 m/s`) | `3.0–4.4 m` | 875 / 1,080 | **81.02%** | **10** (0.93%) |
-| Fast (`10 m/s`) | `3.0–4.4 m` | 396 / 1,072 | 36.94% | 38 (3.52%) |
-| Fast (`12 m/s`) | `5.0 m` | 441 / 1,080 | 40.83% | 28 (2.59%) |
-| Fast (`14 m/s`) | `6.0 m` | 364 / 1,080 | 33.70% | 40 (3.70%) |
+| Speed range | Launch distance | `v11_6000` saves | `v11_6000` rate | `landfix_5350` rate | Gain (`v11` vs Run G) |
+|---|---|---:|---:|---:|---:|
+| Standard (`~5.5–9.0 m/s`) | `3.0–4.4 m` | **896 / 1,080** | **82.96%** | 81.02% | `+21` (`+1.94%`) |
+| Fast (`10 m/s`) | `3.0–4.4 m` | **421 / 1,072** | **39.27%** | 36.94% | `+25` (`+2.33%`) |
+| Fast (`12 m/s`) | `5.0 m` | **460 / 1,080** | **42.59%** | 40.83% | `+19` (`+1.76%`) |
+| Fast (`14 m/s`) | `6.0 m` | **429 / 1,080** | **39.72%** | 33.70% | `+65` (`+6.02%`) |
 
 ![Save rate versus shot speed across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_speed.png)
 
 ![Save rate versus target position R0 to R5 across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_region.png)
 
-The choice of demo policy came down to a trade-off. The two finalists finished three saves apart overall. For Run I relative to Run G, the estimated difference was +0.07 percentage points (paired 95% confidence interval −1.15 to +1.29). I selected `landfix_5350` for its 36 additional upper-corner saves. For studying balance, `gema25_5400` is a useful comparison: it fell 23 fewer times. [Run I results](evaluation/k1_i_allseeds_benchmark.json) · [Paired comparisons](evaluation/k1_i_paired_ci.json)
+The earlier Run G vs Run I comparison (`landfix_5350` vs `gema25_5400`, difference `+0.07` percentage points, paired 95% CI `−1.15` to `+1.29`) established `landfix_5350` as the parent checkpoint for the balanced and agile fine-tuning stages below. [Run I results](evaluation/k1_i_allseeds_benchmark.json) · [Paired comparisons](evaluation/k1_i_paired_ci.json)
 
 The random benchmark used evaluation seeds 1, 777, and 2026. A run without a goalkeeper identified the 4,312 shots that would have scored. The evaluator checked ball contact, goal crossing, and the final ball state. Falls use all 4,320 trials as their denominator. A separate set of 69 fixed shots covers sprint, between-the-legs, motion, and high-ball scenarios. Performance on a physical K1 and repeatability across training seeds remain open questions. [Outcome definitions](legged_gym/legged_gym/utils/shot_outcome.py)
 
@@ -61,23 +63,25 @@ Follow-up work after Run G/I addressed five practical issues observed in simulat
 - **Upper-body joint-target guard (`limit_targets_upper_only = True`):** PD position targets for all 10 arm and head joints are clamped to URDF mechanical limits (`0.0%` target overshoot), while leg targets remain unclamped so explosive jump takeoff and lateral push-off are preserved.
 - **Anti-kolong ready stance:** narrowing `hip_roll = ±0.04` and `ankle_roll = ∓0.04` closes the initial standing inner foot gap from `18.7 cm` (`> 15.0 cm` ball) to `14.6 cm` (`< 15.0 cm` ball), with a tightened `0.20 m` center-gap threshold in `_reward_kolong_gap`.
 
-Head-to-head comparison on seed `1` (`360` random shots per speed mode, `69` fixed shots) and `12 s` 2-policy E2E evaluation (`120` `STD` + `120` `12 m/s @ 5 m` shots), each evaluated in its native configuration ([legacy benchmark](evaluation/k1_stage1_legacy_benchmark.json) · [v11/v13 benchmark](evaluation/k1_v11_v13_benchmark.json)):
+Head-to-head comparison across all three evaluation seeds (`1, 777, 2026`: `4,312` on-target random shots across `4,320` trials, plus `69` fixed shots) and `12 s` 2-policy E2E evaluation (`120` `STD` + `120` `12 m/s @ 5 m` shots on `seed 1`), each evaluated in its native configuration ([Run G 3-seed benchmark](evaluation/k1_g_allseeds_benchmark.json) · [v11/v13 3-seed benchmark](evaluation/k1_v11_v13_allseeds_benchmark.json) · [2-policy E2E verification](evaluation/k1_walk_v6_e2e.json)):
 
 | Metric | Legacy (`landfix_5350 + walk_v4_2400`, `--legacy`) | Balanced (`v11_6000 + walk_v5_2700`, recommended) | Agile (`v13_5800 + walk_v5_2700`) |
 | --- | :---: | :---: | :---: |
-| Standard (`STD`) save rate | `82.5%` | **`85.0%`** | `77.2%` |
-| Fast `10 m/s` save rate | `37.0%` | **`39.5%`** | `37.0%` |
-| Fast `12 m/s @ 5 m` save rate | `41.7%` | **`43.6%`** | `34.4%` |
-| Fast `14 m/s @ 6 m` save rate | `37.8%` | **`43.1%`** | `29.7%` |
-| 4-mode average save rate | `49.7%` | **`52.8%`** | `44.6%` |
-| `HIGH_GRID_30` (upper corners) | `9/30` | `8/30` | **`11/30`** |
-| `KOLONG_12` / `MOTION_9` / `SPRINT1_18` | `7/12` · `7/9` · `16/18` | `6/12` · **`9/9`** · `16/18` | **`8/12`** · **`9/9`** · `16/18` |
+| Standard (`STD`) saves / `1,080` (`3` seeds) | `875` (`81.02%`, `10` falls) | **`896` (`82.96%`, `7` falls)** | `829` (`76.76%`, `62` falls) |
+| Fast `10 m/s` saves / `1,072` (`3` seeds) | `396` (`36.94%`) | **`421` (`39.27%`)** | `419` (`39.09%`) |
+| Fast `12 m/s @ 5 m` saves / `1,080` (`3` seeds) | `441` (`40.83%`) | **`460` (`42.59%`)** | `381` (`35.28%`) |
+| Fast `14 m/s @ 6 m` saves / `1,080` (`3` seeds) | `364` (`33.70%`) | **`429` (`39.72%`)** | `309` (`28.61%`) |
+| Total random saves / `4,312` (`3` seeds) | `2,076` (`48.14%`) | **`2,206` (`51.16%`, `+130` saves)** | `1,938` (`44.94%`) |
+| Upper-corner (`R2+R3`) saves / `1,432` (`3` seeds) | `568` (`39.66%`) | `524` (`36.59%`) | **`573` (`40.01%`)** |
+| Fixed-shot saves (`S1` / `KOL` / `MOT` / `HI`) | **`18/18`** · **`9/12`** · `7/9` · **`13/30`** (`47/69`) | `16/18` · `6/12` · **`9/9`** · `8/30` (`39/69`) | `16/18` · `8/12` · **`9/9`** · `11/30` (`44/69`) |
 | Upper-body PD target `> hard` URDF | up to `33.1%` | **`0.0%`** | **`0.0%`** |
 | Standing inner foot gap (`15.0 cm` ball) | `18.7 cm` | **`14.6 cm`** | **`14.6 cm`** |
-| 2-policy E2E falls (`STD` / `12 m/s`, `12 s`) | **`0/120`** / **`3/120`** (`p2 = 0`) | `3/120` / `9/120` (`p2 = 1 / 3`) | `3/120` / **`3/120`** (`p2 = 1 / 2`) |
-| 2-policy E2E `HOME` (`240` shots) & jitter `\|da\|` | **`234/240`** · `0.0013–0.0014` | `226/240` · `0.0012–0.0013` | **`234/240`** · **`0.0011`** |
+| 2-policy E2E falls (`STD` / `12 m/s`, `12 s`) | **`0/120`** / `3/120` (`p2 = 0`) | `2/120` / `8/120` (`p2 = 2 / 2`) | **`0/120`** / **`1/120`** (`p2 = 0 / 1`) |
+| 2-policy E2E `HOME` (`240` shots) & jitter `\|da\|` | `234/240` · `0.0013–0.0014` | `230/240` · `0.0012` | **`238/240`** · **`0.0011`** |
 
-`v11_6000 + walk_v5_2700` is the recommended general-purpose pair: it achieves the highest save rate at every speed (`85.0%` `STD`, `52.8%` 4-mode average) with even `R0..R5` coverage (`47..54 / 60` on `STD`), `8/30` on `HIGH_GRID_30`, `0.0%` upper-body target overshoot, and an anti-kolong `14.6 cm` standing gap. `v13_5800 + walk_v5_2700` is the specialist for aggressive high-corner leaps (`11/30` `HIGH_GRID_30`, `3/120` `12 m/s` E2E falls) at a lower average save rate (`44.6%`). Note: the `v11`/`v13` table above is single-seed (`seed 1`), and `walk_v5_2700` was trained before `limit_targets_upper_only = True` was enabled (leaving `1–3/120` Policy 2 falls vs `0/240` when legs were clamped); multi-seed verification and a short `k1_walk` re-polish remain open items.
+`v11_6000 + walk_v5_2700` is the recommended general-purpose pair: across `4,312` on-target shots (`seeds 1, 777, 2026`), it stops `2,206` shots (`51.16%`, `+130` saves over `landfix_5350`), wins at every speed band (`82.96%` `STD` with only `7 / 1,080` falls, `39.27%` at `10 m/s`, `42.59%` at `12 m/s`, `39.72%` at `14 m/s`), guarantees `0.0%` upper-body target overshoot, and maintains an anti-kolong `14.6 cm` standing gap. `v13_5800 + walk_v5_2700` is the specialist for aggressive upper-corner leaps (`573 / 1,432 = 40.01%` upper-corner saves, `11/30` on `HIGH_GRID_30`, and `238/240` `HOME` with `1` Policy 2 fall in 2-policy E2E) at a lower overall save rate (`44.94%`).
+
+A re-polish of Policy 2 under the final guard (`k1_walk_v6`, `300` iterations from `walk_v5_2700`, [verification](evaluation/k1_walk_v6_e2e.json)) lowered standing jitter (`|da| 0.0007–0.0008` vs `0.0011–0.0012`) while keeping `1–7` Policy 2 falls (`227–235/240` `HOME`), within simulation noise of `walk_v5_2700` (`1–4` Policy 2 falls, `230–238/240` `HOME`), so `walk_v5_2700` remains the recommended Policy 2.
 
 ## Internship report
 
@@ -103,19 +107,21 @@ The viewer loads local weights from `legged_gym/logs/k1/<experiment>/model_<iter
 
 ```bash
 ./play_k1_size1.sh --check
-# Recommended 2-policy balanced goalkeeper (upper-body guard + anti-kolong stance):
-./play_k1_size1.sh --exptid k1_v11_balanced_p2 --checkpoint 6000 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt --ball_speed 12 --start_x 5 --seed 100
-# Aggressive upper-corner leap variant:
-./play_k1_size1.sh --exptid k1_v13_agile --checkpoint 5800 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt --ball_speed 12 --start_x 5 --seed 100
-# Legacy Run G baseline in its original stance (hip/ankle roll ±0.10, no target clamp):
-./play_k1_size1.sh --legacy --exptid k1_v9_s1_landfix --checkpoint 5350 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v4/model_2400.pt --ball_speed 12 --start_x 5 --seed 100
+# Default final 2-policy balanced demo (auto-loads v11_6000 + walk_v5_2700 when present):
+./play_k1_size1.sh
+# Same final demo with fast 12 m/s shots from 5 m (same --seed for paired comparison):
+./play_k1_size1.sh --ball_speed 12 --start_x 5 --seed 100
+# Aggressive upper-corner leap variant (v13_5800 + walk_v5_2700):
+./play_k1_size1.sh --exptid k1_v13_agile --checkpoint 5800 --ball_speed 12 --start_x 5 --seed 100
+# Legacy Run G baseline in its original stance (hip/ankle roll ±0.10, no target clamp, auto-loads walk_v4_2400):
+./play_k1_size1.sh --legacy --ball_speed 12 --start_x 5 --seed 100
 ```
 
-Omit `--ball_speed 12 --start_x 5` for standard-speed (`STD`) shots. Set `--target_y` and `--target_z` to aim at a specific point in metres, or use viewer hotkeys (`F`/`G` speed, `0..5` region, `6` random, `Q`/`E` distance, `R`/`Enter` re-shoot). Use `--legacy` whenever replaying checkpoints trained before the `±0.04` anti-kolong stance and target-clamp update. The viewer requires an active graphical session.
+Omit `--ball_speed 12 --start_x 5` for standard-speed (`STD`) shots, or pass `--walk_ckpt ""` to disable Policy 2 walk-back. Set `--target_y` and `--target_z` to aim at a specific point in metres, or use viewer hotkeys (`F`/`G` speed, `0..5` region, `6` random, `Q`/`E` distance, `R`/`Enter` re-shoot). Use `--legacy` whenever replaying checkpoints trained before the `±0.04` anti-kolong stance and target-clamp update. The viewer requires an active graphical session.
 
 ## Train and evaluate
 
-Use a fresh experiment ID for each run. The second command resumes from the selected checkpoint using the reward configuration in your checkout. Reproducing Run I requires its exponential-moving-average recovery reward with weight 25.
+Use a fresh experiment ID for each run. The second command resumes from the selected checkpoint using the reward configuration in your checkout; the third trains the Policy 2 walk-back controller (`k1_walk`).
 
 ```bash
 python legged_gym/legged_gym/scripts/train.py --task k1 --exptid k1_local_train --seed 1 --num_envs 1536 --headless
@@ -127,8 +133,8 @@ The paired benchmark needs the evaluation checkpoints passed via `--models` and 
 
 ```bash
 python legged_gym/legged_gym/scripts/benchmark_k1.py --seeds 1 777 2026 \
-  --models landfix_5350=legged_gym/logs/k1/k1_v9_s1_landfix/model_5350.pt \
-           gema25_5400=legged_gym/logs/k1/k1_v9_s1_gema25/model_5400.pt \
+  --models v11_6000=legged_gym/logs/k1/k1_v11_balanced_p2/model_6000.pt \
+           v13_5800=legged_gym/logs/k1/k1_v13_agile/model_5800.pt \
   --output evaluation/local_comparison.json
 python -m unittest discover -s tests -v
 ```
