@@ -29,5 +29,5 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
 
-from .actor_critic import ActorCritic
+from .actor_critic import ActorCritic, WalkActorCritic
 from .amp import AMP

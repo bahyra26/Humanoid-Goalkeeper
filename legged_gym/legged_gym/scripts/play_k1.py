@@ -10,7 +10,8 @@ from legged_gym.scripts.play import play
 if __name__ == '__main__':
     args = get_args()
     args.task = 'k1'
-    args.headless = False
+    if '--headless' not in sys.argv:
+        args.headless = False
 
     # Default ke model utama landfix_5350 (atau v9_5000) bila tidak ditentukan
     k1_logs_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', 'k1')

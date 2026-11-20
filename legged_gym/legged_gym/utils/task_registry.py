@@ -145,7 +145,8 @@ class TaskRegistry():
             log_root = os.path.join(log_root, 'logs', train_cfg.runner.experiment_name)
             log_dir = os.path.join(log_root, args.exptid)
         
-        if log_dir is not None and not train_cfg.runner.resume and os.path.isdir(log_dir):
+        resume_into_different_dir = bool(getattr(args, 'resumeid', None)) and args.resumeid != args.exptid
+        if log_dir is not None and (not train_cfg.runner.resume or resume_into_different_dir) and os.path.isdir(log_dir):
             if any(name.startswith('model_') and name.endswith('.pt') for name in os.listdir(log_dir)):
                 raise FileExistsError(f'Checkpoint directory already exists: {log_dir}; use resume or a new exptid')
         train_cfg_dict = class_to_dict(train_cfg)
@@ -154,13 +155,12 @@ class TaskRegistry():
         resume = train_cfg.runner.resume
 
         if resume:
+            ckpt_root = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name) if log_root is None else log_root
             if args.resumeid:
-                resume_root = os.path.join(log_root, args.resumeid)
-            log_root = os.path.join(log_root, args.exptid)
-            if args.resumeid:
+                resume_root = os.path.join(ckpt_root, args.resumeid)
                 resume_path = get_load_path(resume_root, load_run=train_cfg.runner.load_run, checkpoint=train_cfg.runner.checkpoint)
             else:
-                resume_path = get_load_path(log_root, load_run=train_cfg.runner.load_run, checkpoint=train_cfg.runner.checkpoint)
+                resume_path = get_load_path(os.path.join(ckpt_root, args.exptid), load_run=train_cfg.runner.load_run, checkpoint=train_cfg.runner.checkpoint)
             runner.load(resume_path)
         return runner, train_cfg
 

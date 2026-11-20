@@ -250,6 +250,7 @@ class LeggedRobot(BaseTask):
         self.common_step_counter += 1
         self.catchstep -= 1
         self.extras.pop("shot_results", None)
+        self.extras.pop("episode", None)
         # prepare quantities
         self.base_quat[:] = self.root_states[:, 3:7]
         self.roll, self.pitch, self.yaw = euler_from_quaternion(self.base_quat)
@@ -293,6 +294,7 @@ class LeggedRobot(BaseTask):
             self.goal_conceded_flag[conceded] = 1.0
             self.success_flag[conceded] = 0.0
             self.arm_save_flag[conceded] = 0.0
+            self._k1_update_ball_safety()
 
         hand_pos = self.rigid_body_states[:, self.hand_indices, :3].clone() 
         hand_pos_l, hand_pos_r =  hand_pos[:,0,:], hand_pos[:,1,:]
@@ -314,6 +316,8 @@ class LeggedRobot(BaseTask):
 
         # compute observations, rewards, resets, ...
         self.check_termination()
+        if self.cfg.env.send_timeouts:
+            self.extras["time_outs"] = self.time_out_buf
 
         self.compute_reward()
 
@@ -438,6 +442,18 @@ class LeggedRobot(BaseTask):
             }
             if hasattr(self, 'evaluation_shot'):
                 self.extras['shot_results'].update(self._evaluation_diagnostics(env_ids))
+            elif self.play:
+                local_z = self.ball_states[env_ids, 2] - self.env_origins[env_ids, 2]
+                self.extras['shot_results'].update({
+                    'final_ball_x_m': local_x.clone(),
+                    'final_ball_y_m': local_y.clone(),
+                    'final_ball_z_m': local_z.clone(),
+                    'final_ball_vx_m_s': self.ball_states[env_ids, 7].clone(),
+                    'final_ball_speed_m_s': ball_speed.clone(),
+                    'both_feet_support': torch.all(
+                        self.contact_forces[env_ids][:, self.contact_feet_indices, 2] > 1.0, dim=-1
+                    ).clone(),
+                })
 
         reachcount = self.success_rate[:,1] > 9    
         self.success_rate[reachcount,2] = self.success_rate[reachcount, 0] / self.success_rate[reachcount, 1]
@@ -492,12 +508,6 @@ class LeggedRobot(BaseTask):
         if saved_fall_rate is not None:
             self.extras["episode"]["fall_rate"] = saved_fall_rate
 
-
-        # send timeout info to the algorithm
-        if self.cfg.env.send_timeouts:
-            self.extras["time_outs"] = self.time_out_buf
-
-            
         if (self.common_step_counter - self.last_step_counter) > 500 and not self.play:
             if self.cfg.asset.name != "k1":
                 self.startstep = 50 - random.randint(3, 10)
@@ -584,7 +594,9 @@ class LeggedRobot(BaseTask):
             flying = ((end_target_local[:,0] > 0.05) & (end_target_local[:,0] < 3.4) & (end_target_local[:,1] > -2.0) & (end_target_local[:,1] < 2.0) & (end_target_local[:,2] < 1.8) & (self.catchstep > 0.) & ((end_target_local[:,0] < self.ball_last[:,0]) | (self.ball_last[:,0] == 0.))).view(-1, 1)
             random_vanish = (self.catchstep > self.vanish_step).view(-1, 1)
         else:
-            flying = ((end_target_local[:,0] > -0.02) & (end_target_local[:,0] < 16.0) & (end_target_local[:,1] > -2.2) & (end_target_local[:,1] < 2.2) & (end_target_local[:,2] < 2.2) & (~self._k1_ball_safe()) & (self.goal_conceded_flag == 0)).view(-1, 1)
+            latched_off = getattr(self, 'k1_ball_obs_latched_off', None)
+            not_latched = (~latched_off) if latched_off is not None else True
+            flying = ((end_target_local[:,0] > -0.02) & (end_target_local[:,0] < 16.0) & (end_target_local[:,1] > -2.2) & (end_target_local[:,1] < 2.2) & (end_target_local[:,2] < 2.2) & (~self._k1_ball_safe()) & (self.goal_conceded_flag == 0) & not_latched).view(-1, 1)
             random_vanish = (~((self.catchstep < 25) & (self.catchstep > 25 - self.vanish_step))).view(-1, 1)
         self.ball_last = end_target_local
 
@@ -843,10 +855,16 @@ class LeggedRobot(BaseTask):
         control_type = self.cfg.control.control_type
         if control_type=="P":
             if getattr(self.cfg.control, "limit_joint_targets", False):
-                # Simulation guard only: URDF limits do not certify hardware safety.
-                self.joint_pos_target = torch.maximum(
-                    torch.minimum(self.joint_pos_target, self.dof_pos_limits[:, 1]),
-                    self.dof_pos_limits[:, 0])
+                # Clamp PD targets to mechanical URDF limits so targets never command past hard stops
+                # while keeping full actuator headroom inside the soft-limit reward buffer.
+                lim = getattr(self, "hard_dof_pos_limits", self.dof_pos_limits)
+                clamped = torch.maximum(torch.minimum(self.joint_pos_target, lim[:, 1]), lim[:, 0])
+                # Upper-only: clamp arms+head, leave legs free so jump/lunge torque stays explosive.
+                if getattr(self.cfg.control, "limit_targets_upper_only", False):
+                    free_legs = torch.ones_like(clamped, dtype=torch.bool)
+                    free_legs[:, self.upper_body_joint_indices] = False
+                    clamped = torch.where(free_legs, self.joint_pos_target, clamped)
+                self.joint_pos_target = clamped
             torques = self.p_gains * self.Kp_factors * (self.joint_pos_target - self.dof_pos) - self.d_gains * self.Kd_factors * self.dof_vel
         elif control_type=="V":
             torques = self.p_gains*(actions_scaled - self.dof_vel) - self.d_gains*(self.dof_vel - self.last_dof_vel)/self.sim_params.dt
@@ -946,10 +964,14 @@ class LeggedRobot(BaseTask):
         self.goal_conceded_flag[ball_ids] = 0.
         self.arm_save_flag[ball_ids] = 0.
         self.recovery_stable_steps[ball_ids] = 0
-        if hasattr(self, 'k1_safe_steps'):
-            self.k1_safe_steps[ball_ids] = 0
-        if hasattr(self, 'k1_hold_pose_locked'):
-            self.k1_hold_pose_locked[ball_ids] = False
+        if hasattr(self, 'recovery_ema'):
+            self.recovery_ema[ball_ids] = 0.
+        if hasattr(self, 'k1_ball_safe_steps'):
+            self.k1_ball_safe_steps[ball_ids] = 0
+        if hasattr(self, 'k1_play_done_steps'):
+            self.k1_play_done_steps[ball_ids] = 0
+        if hasattr(self, 'k1_ball_obs_latched_off'):
+            self.k1_ball_obs_latched_off[ball_ids] = False
         self.substep_max_ball_force[ball_ids] = 0.
         self.substep_min_arm_dist[ball_ids] = 10.
         self.substep_min_robot_dist[ball_ids] = 10.
@@ -1097,14 +1119,24 @@ class LeggedRobot(BaseTask):
             if use_fast_train:
                 kolong_ratio = float(getattr(self.cfg.commands, 'train_kolong_ratio', 0.0))
                 if kolong_ratio > 0.0:
-                    low_std = (~fast_mask.squeeze(-1)) & ((self.end_regions[ball_ids] == 4) | (self.end_regions[ball_ids] == 5))
-                    kol_mask = low_std & (torch.rand(n, dtype=dtype, device=device) < kolong_ratio)
+                    low_mask = (self.end_regions[ball_ids] == 4) | (self.end_regions[ball_ids] == 5)
+                    kol_mask = low_mask & (torch.rand(n, dtype=dtype, device=device) < kolong_ratio)
                     if kol_mask.any():
                         sign_l = torch.where(self.end_regions[ball_ids] == 4, 1.0, -1.0)
-                        kol_y = sign_l * (0.01 + 0.23 * torch.rand(n, dtype=dtype, device=device))
-                        kol_z = 0.12 + 0.12 * torch.rand(n, dtype=dtype, device=device)
+                        kol_y = sign_l * (0.24 * torch.rand(n, dtype=dtype, device=device))
+                        kol_z = 0.11 + 0.13 * torch.rand(n, dtype=dtype, device=device)
                         goal_y = torch.where(kol_mask, kol_y, goal_y)
                         goal_z = torch.where(kol_mask, kol_z, goal_z)
+                high_corner_ratio = float(getattr(self.cfg.commands, 'train_high_corner_ratio', 0.0))
+                if high_corner_ratio > 0.0:
+                    high_mask = (self.end_regions[ball_ids] == 2) | (self.end_regions[ball_ids] == 3)
+                    hc_mask = high_mask & (torch.rand(n, dtype=dtype, device=device) < high_corner_ratio)
+                    if hc_mask.any():
+                        sign_h = torch.where(self.end_regions[ball_ids] == 2, 1.0, -1.0)
+                        hc_y = sign_h * (0.40 + 0.45 * torch.rand(n, dtype=dtype, device=device))
+                        hc_z = 0.85 + 0.29 * torch.rand(n, dtype=dtype, device=device)
+                        goal_y = torch.where(hc_mask, hc_y, goal_y)
+                        goal_z = torch.where(hc_mask, hc_z, goal_z)
 
             custom_y = getattr(self.cfg.commands, 'custom_target_y', None)
             custom_z = getattr(self.cfg.commands, 'custom_target_z', None)
@@ -1368,9 +1400,10 @@ class LeggedRobot(BaseTask):
         self.goal_conceded_flag = torch.zeros(self.num_envs, dtype = torch.float, device= self.device)
         self.arm_save_flag = torch.zeros(self.num_envs, dtype = torch.float, device= self.device)
         self.recovery_stable_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
-        self.k1_safe_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
-        self.k1_hold_pose_locked = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
-        self.k1_hold_upper_dof_pos = None
+        self.recovery_ema = torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
+        self.k1_ball_safe_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        self.k1_play_done_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        self.k1_ball_obs_latched_off = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.substep_max_ball_force = torch.zeros(self.num_envs, dtype = torch.float, device= self.device)
         self.substep_min_arm_dist = torch.full((self.num_envs,), 10.0, dtype = torch.float, device= self.device)
         self.substep_min_robot_dist = torch.full((self.num_envs,), 10.0, dtype = torch.float, device= self.device)
@@ -1651,9 +1684,9 @@ class LeggedRobot(BaseTask):
             self.gym.set_actor_rigid_body_properties(env_handle, actor_handle, body_props, recomputeInertia=True)
             self.actor_handles.append(actor_handle)
 
-            ballpos = pos
-            ballpos[:0] += torch_rand_float(0.5, 1.0, (1,1), device=self.device).squeeze(1)
-            ballpos[:1] += torch_rand_float(-0.5, 0.5, (1,1), device=self.device).squeeze(1)
+            ballpos = pos.clone()
+            ballpos[0] += torch_rand_float(0.5, 1.0, (1, 1), device=self.device).item()
+            ballpos[1] += torch_rand_float(-0.5, 0.5, (1, 1), device=self.device).item()
             ballpos[2] = 1.5
             
             start_pose.p = gymapi.Vec3(*ballpos)
@@ -1916,7 +1949,7 @@ class LeggedRobot(BaseTask):
         active = (ball_local_x > -0.02) & (~self._k1_ball_safe()) & (self.goal_conceded_flag == 0)
         _, center_low, straddling, ankle_gap, nearest_foot_err, _ = self._k1_kolong_state()
         foot_clear_err = torch.clamp(nearest_foot_err - 0.06, min=0.0, max=0.40) * straddling.float()
-        split_excess = torch.clamp(ankle_gap - 0.22, min=0.0, max=0.45)
+        split_excess = torch.clamp(ankle_gap - 0.20, min=0.0, max=0.45)
         center_split_err = (2.2 * split_excess + 5.0 * torch.square(split_excess)) * (center_low & (ball_local_x < 3.6)).float()
         return torch.clamp(1.8 * foot_clear_err + center_split_err, max=2.2) * active.float()
 
@@ -1938,8 +1971,8 @@ class LeggedRobot(BaseTask):
                 nearest_foot_err = torch.zeros_like(self.dist)
                 track_y = end_y_local
 
-            # Shift torso (~0.20 m = natural stance half-width) on center_low shots so the near foot directly blocks ball_y.
-            kolong_offset = torch.where(end_y_local >= 0.0, 0.20, -0.20)
+            # Shift torso (~0.11 m = anti-kolong stance half-width) on center_low shots so the near foot blocks ball_y without splitting legs.
+            kolong_offset = torch.where(end_y_local >= 0.0, 0.11, -0.11)
             target_y = torch.where(center_low, end_y_local - kolong_offset, torch.clamp(end_y_local, -1.25, 1.25) * 0.85)
             curr_y = self.torso_pos[:, 1] - self.env_origins[:, 1]
             lat_rew = torch.exp(-4.0 * torch.square(curr_y - target_y))
@@ -2001,7 +2034,7 @@ class LeggedRobot(BaseTask):
                 foot_low_cap = torch.clamp(shot_target_z * 0.75, min=0.10, max=0.22)
                 foot_low_z = torch.exp(-45.0 * torch.square(torch.clamp(near_foot_z - foot_low_cap, min=0.0)))
                 leg_block = torch.exp(-20.0 * torch.square(torch.clamp(nearest_foot_err - 0.05, min=0.0))) * foot_low_z
-                compact_gap = torch.exp(-20.0 * torch.square(torch.clamp(ankle_gap - 0.22, min=0.0)))
+                compact_gap = torch.exp(-20.0 * torch.square(torch.clamp(ankle_gap - 0.20, min=0.0)))
                 foot_block = torch.where(center_low, leg_block * compact_gap, leg_block)
                 outer_low = low_ball & (~center_low) & (ball_local_x < 2.2)
                 leg_weight = torch.where(center_low, 1.35, torch.where(straddling | outer_low, 0.95, 0.0))
@@ -2076,16 +2109,23 @@ class LeggedRobot(BaseTask):
         local = self.ball_states[:, :3] - self.env_origins
         x, y, z = local[:, 0], local[:, 1], local[:, 2]
         vx = self.ball_states[:, 7]
+        ball_speed = torch.norm(self.ball_states[:, 7:10], dim=-1)
         goal = self.cfg.goal
         edge_x = goal.line_x + goal.ball_radius
         half_w = getattr(goal, 'half_width', 1.30)
-        side_clear = (torch.abs(y) > half_w + goal.ball_radius) & (vx >= -0.15)
+        side_clear = (torch.abs(y) > half_w + goal.ball_radius + 0.15) & (vx >= -0.10)
+        settled_front = (
+            (x > edge_x + 0.30)
+            & (vx >= -0.05)
+            & (z <= goal.ball_radius + 0.05)
+            & (ball_speed <= 0.25)
+        )
         escaped = (
             (x < goal.line_x - goal.ball_radius)
-            | ((x > goal.line_x + 0.02) & (vx >= 0.8))
-            | ((x > edge_x) & (vx >= 0.6))
-            | ((x > edge_x + 0.30) & (vx >= 0.05))
-            | ((x > edge_x + 0.30) & (vx >= 0.0) & (z <= 0.14))
+            | ((x > edge_x + 0.30) & (vx >= 0.35))
+            | ((x > edge_x + 0.55) & (vx >= 0.05) & (z <= 0.45))
+            | ((x > 1.20) & (vx >= 0.0))
+            | settled_front
             | side_clear
         )
         safe = (self.success_flag > 0) & escaped
@@ -2093,47 +2133,107 @@ class LeggedRobot(BaseTask):
             safe = safe | (x < -0.10)
         return safe & (self.goal_conceded_flag == 0)
 
+    def _k1_ball_strict_clear_now(self):
+        """Instantaneous check that the ball has left the danger zone or settled dead on the ground."""
+        local = self.ball_states[:, :3] - self.env_origins
+        x, y, z = local[:, 0], local[:, 1], local[:, 2]
+        vx = self.ball_states[:, 7]
+        speed = torch.norm(self.ball_states[:, 7:10], dim=-1)
+        goal = self.cfg.goal
+        edge_x = goal.line_x + goal.ball_radius
+        half_w = getattr(goal, 'half_width', 1.30)
+        far_front = (
+            ((x > 0.60) & (vx >= 0.80))
+            | ((x > 0.85) & (vx >= 0.25))
+            | ((x > 1.15) & (vx >= 0.0))
+        )
+        side_out = (torch.abs(y) > half_w + goal.ball_radius + 0.15) & (vx >= -0.05)
+        behind_out = x < (goal.line_x - goal.ball_radius - 0.10)
+        settled_ground = (
+            (x > edge_x + 0.30)
+            & (vx >= -0.05)
+            & (z <= goal.ball_radius + 0.05)
+            & (speed <= 0.30)
+        )
+        not_wild = far_front | side_out | behind_out | settled_ground
+        saved_clear = (self.success_flag > 0) & (self.goal_conceded_flag == 0) & not_wild
+        play_done = (
+            saved_clear
+            | (self.goal_conceded_flag > 0)
+            | ((self.goal_conceded_flag == 0) & (behind_out | side_out | settled_ground))
+        )
+        return saved_clear, play_done
+
+    def _k1_update_ball_safety(self):
+        """Update 0.4 s continuous safety counters and latch ball_obs off once a shot is fully done."""
+        saved_clear, play_done = self._k1_ball_strict_clear_now()
+        self.k1_ball_safe_steps = torch.where(
+            saved_clear, self.k1_ball_safe_steps + 1, torch.zeros_like(self.k1_ball_safe_steps)
+        )
+        self.k1_play_done_steps = torch.where(
+            play_done, self.k1_play_done_steps + 1, torch.zeros_like(self.k1_play_done_steps)
+        )
+        min_steps = max(1, round(0.24 / float(self.dt)))
+        fully_done = self.k1_play_done_steps >= min_steps
+        self.k1_ball_obs_latched_off = self.k1_ball_obs_latched_off | fully_done
+        local = self.ball_states[:, :3] - self.env_origins
+        goal = self.cfg.goal
+        half_w = getattr(goal, 'half_width', 1.30)
+        re_approaching = (
+            (local[:, 0] > goal.line_x + goal.ball_radius)
+            & (local[:, 0] < 6.0)
+            & (torch.abs(local[:, 1]) < half_w + 0.5)
+            & (self.ball_states[:, 7] < -0.5)
+            & (self.goal_conceded_flag == 0)
+        )
+        self.k1_ball_obs_latched_off = self.k1_ball_obs_latched_off & (~re_approaching)
+
+    def _k1_ball_fully_safe(self):
+        """True only after a parried, non-conceded ball stays outside danger continuously for >= 0.24 s."""
+        min_steps = max(1, round(0.24 / float(self.dt)))
+        return (self.k1_ball_safe_steps >= min_steps) & (self.goal_conceded_flag == 0)
+
+    def _k1_play_fully_done(self):
+        """True once the shot outcome (safe parry, conceded goal, or miss out) holds cleanly for >= 0.24 s."""
+        min_steps = max(1, round(0.24 / float(self.dt)))
+        return self.k1_play_done_steps >= min_steps
+
     def _k1_ball_settled_or_past(self):
         # True once the shot is saved/cleared OR has already entered the goal, so post-jump landing balance activates either way.
-        return self._k1_ball_safe(include_behind=True) | (self.goal_conceded_flag > 0)
+        latched_off = getattr(self, 'k1_ball_obs_latched_off', None)
+        base = self._k1_ball_safe(include_behind=True) | (self.goal_conceded_flag > 0)
+        return (base | latched_off) if latched_off is not None else base
 
     def _k1_both_feet_support(self):
-        """Return 1.0 when both feet bear load (>1 N) vs 0.25 otherwise to incentivize double-support recovery."""
+        """Return 1.0 when both feet bear load (>1 N) vs 0.45 otherwise (favors double support without punishing a recovery step)."""
         if not hasattr(self, 'contact_forces') or not hasattr(self, 'contact_feet_indices'):
             return torch.ones(self.num_envs, dtype=torch.float, device=self.device)
         both_feet = torch.all(self.contact_forces[:, self.contact_feet_indices, 2] > 1.0, dim=-1)
-        return torch.where(both_feet, torch.ones_like(both_feet, dtype=torch.float), torch.full_like(both_feet, 0.25, dtype=torch.float))
+        return torch.where(both_feet, torch.ones_like(both_feet, dtype=torch.float), torch.full_like(both_feet, 0.45, dtype=torch.float))
 
     def _reward_post_hold(self):
-        # Hold the last blocking pose once landed upright on both feet; release to low-velocity balance if tilting > ~23 deg.
-        safe_mask = self._k1_ball_safe(include_behind=True)
-        active = safe_mask.float()
-        upper_vel_sq = torch.mean(torch.square(self.dof_vel[:, self.upper_body_joint_indices]), dim=-1)
-        leg_vel_sq = torch.mean(torch.square(self.dof_vel[:, self.leg_joint_indices]), dim=-1)
+        # Return legs smoothly to upright ready-stance posture (default_dof_pos, standing height) and calm stillness at any (x, y).
+        settled = self._k1_ball_settled_or_past()
+        active = settled.float()
         tilt_sq = torch.sum(torch.square(self.projected_gravity[:, :2]), dim=-1)
         upright = torch.exp(-6.5 * tilt_sq)
+        base_z = self.root_states[:, 2] - self.env_origins[:, 2]
+        height_ok = torch.exp(-25.0 * torch.square(base_z - self.cfg.init_state.pos[2]))
         support = self._k1_both_feet_support() if hasattr(self, '_k1_both_feet_support') else torch.ones_like(tilt_sq)
-        upper_still = 0.55 * torch.exp(-0.80 * upper_vel_sq) + 0.45 * torch.exp(-0.02 * upper_vel_sq)
-        leg_still = 0.60 * torch.exp(-1.00 * leg_vel_sq) + 0.40 * torch.exp(-0.05 * leg_vel_sq)
-        upper_term = upper_still
-        if hasattr(self, 'k1_safe_steps') and hasattr(self, 'k1_hold_pose_locked'):
-            self.k1_safe_steps = torch.where(safe_mask, self.k1_safe_steps + 1, 0)
-            if self.k1_hold_upper_dof_pos is None:
-                self.k1_hold_upper_dof_pos = self.dof_pos[:, self.upper_body_joint_indices].clone()
-            both_feet = support > 0.99
-            latch = safe_mask & (self.k1_safe_steps >= 3) & (~self.k1_hold_pose_locked) & both_feet & (tilt_sq <= 0.09)
-            if latch.any():
-                self.k1_hold_upper_dof_pos[latch] = self.dof_pos[latch][:, self.upper_body_joint_indices]
-                self.k1_hold_pose_locked[latch] = True
-            self.k1_hold_pose_locked &= safe_mask
-            pose_err_sq = torch.mean(
-                torch.square(self.dof_pos[:, self.upper_body_joint_indices] - self.k1_hold_upper_dof_pos),
+        upper_vel_sq = torch.mean(torch.square(self.dof_vel[:, self.upper_body_joint_indices]), dim=-1)
+        leg_vel_sq = torch.mean(torch.square(self.dof_vel[:, self.leg_joint_indices]), dim=-1)
+        stillness = 0.50 * torch.exp(-1.5 * upper_vel_sq) + 0.50 * torch.exp(-1.5 * leg_vel_sq)
+        if hasattr(self, 'dof_pos') and hasattr(self, 'default_dof_pos'):
+            leg_err_sq = torch.mean(
+                torch.square(self.dof_pos[:, self.leg_joint_indices] - self.default_dof_pos[:, self.leg_joint_indices]),
                 dim=-1,
             )
-            pose_ok = self.k1_hold_pose_locked & (tilt_sq <= 0.16)
-            pose_hold = torch.where(pose_ok, torch.exp(-6.0 * pose_err_sq), upper_still)
-            upper_term = 0.50 * upper_still + 0.50 * pose_hold
-        return (0.70 * upper_term + 0.30 * leg_still) * upright * support * active
+            leg_pose = torch.exp(-4.0 * leg_err_sq) * height_ok
+            stance_term = 0.55 * leg_pose + 0.45 * stillness
+        else:
+            stance_term = stillness
+        save_weight = torch.where(self.goal_conceded_flag > 0, 0.50, 1.00)
+        return stance_term * upright * support * save_weight * active
 
     def _reward_collision(self):
         if len(self.penalised_contact_indices) == 0:
@@ -2160,17 +2260,40 @@ class LeggedRobot(BaseTask):
         return ((self.goal_conceded_flag > 0) & self.reset_buf).float() / self.dt
 
     def _reward_recovery(self):
-        # shortcut: requires 25 consecutive calm double-support steps; zero under noisy PPO rollouts (std~0.39), see Run I EMA ablation.
-        stable = self._k1_ball_safe()
-        stable &= self.projected_gravity[:, 2] <= -0.82
-        stable &= self.root_states[:, 2] - self.env_origins[:, 2] >= 0.7 * self.cfg.init_state.pos[2]
-        stable &= torch.norm(self.base_lin_vel, dim=-1) < 0.60
-        stable &= torch.norm(self.base_ang_vel, dim=-1) < 1.25
-        stable &= torch.all(self.contact_forces[:, self.contact_feet_indices, 2] > 1.0, dim=-1)
-        stable &= torch.min(self.rigid_body_states[:, self.knee_indices, 2], dim=-1).values >= self.cfg.rewards.min_knee_height
-        self.recovery_stable_steps = torch.where(stable, self.recovery_stable_steps + 1, 0)
-        recovered = self.recovery_stable_steps * self.dt >= 0.5
-        return (recovered & stable & self.time_out_buf & self.reset_buf).float() / self.dt
+        # Smooth EMA terminal bonus for returning to a calm, upright ready stance on both feet at any (x, y).
+        lin_vel = torch.norm(self.base_lin_vel, dim=-1)
+        ang_vel = torch.norm(self.base_ang_vel, dim=-1)
+        safe = self._k1_ball_safe()
+        base_z = self.root_states[:, 2] - self.env_origins[:, 2]
+        posture_ok = (
+            safe
+            & (self.projected_gravity[:, 2] <= -0.90)
+            & (base_z >= 0.80 * self.cfg.init_state.pos[2])
+            & torch.all(self.contact_forces[:, self.contact_feet_indices, 2] > 1.0, dim=-1)
+            & (torch.min(self.rigid_body_states[:, self.knee_indices, 2], dim=-1).values >= self.cfg.rewards.min_knee_height)
+        )
+        end_ok = posture_ok & (lin_vel < 0.80) & (ang_vel < 1.80)
+        calm_q = torch.exp(-0.5 * (lin_vel / 0.60) ** 2 - 0.5 * (ang_vel / 1.50) ** 2)
+        if hasattr(self, 'dof_pos') and hasattr(self, 'default_dof_pos'):
+            dof_err_sq = torch.mean(torch.square(self.dof_pos - self.default_dof_pos), dim=-1)
+            stance_q = torch.exp(-2.0 * dof_err_sq)
+            step_q = posture_ok.float() * (0.50 * calm_q + 0.50 * stance_q)
+        else:
+            step_q = posture_ok.float() * calm_q
+
+        dt = float(self.dt)
+        alpha = min(0.5, dt / 0.25)
+        n_full = max(1, round(0.5 / dt))
+        norm_cap = 1.0 - (1.0 - alpha) ** n_full
+        if not hasattr(self, 'recovery_ema'):
+            self.recovery_ema = torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
+        self.recovery_ema = torch.where(
+            safe, (1.0 - alpha) * self.recovery_ema + alpha * step_q, torch.zeros_like(self.recovery_ema)
+        )
+        self.recovery_stable_steps = torch.where(end_ok, self.recovery_stable_steps + 1, 0)
+        ema_norm = torch.clamp(self.recovery_ema / norm_cap, 0.0, 1.0)
+        payout = 0.25 + 0.75 * ema_norm
+        return torch.where(end_ok & self.time_out_buf & self.reset_buf, payout, torch.zeros_like(payout)) / dt
 
     def _reward_success(self):
         if self.cfg.asset.name == "k1":
@@ -2318,7 +2441,8 @@ class LeggedRobot(BaseTask):
         foot_vel = self.rigid_body_states[:,  self.contact_feet_indices, 7:10]  
         contactvel = torch.sum(torch.norm(foot_vel, dim=-1) * (torch.norm(self.contact_forces[:, self.contact_feet_indices, :], dim=-1) > 1.), dim=1)
         if self.cfg.asset.name == "k1":
-            return torch.exp(contactvel * -10) * self._k1_both_feet_support() * self._k1_ball_settled_or_past().float()
+            upright = torch.exp(-4.0 * torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1))
+            return torch.exp(contactvel * -10) * upright * self._k1_both_feet_support() * self._k1_ball_settled_or_past().float()
         return torch.exp(contactvel * -10)
 
     def _reward_penalize_sharpcontact(self):
@@ -2328,7 +2452,10 @@ class LeggedRobot(BaseTask):
 
     def _reward_postorientation(self):
         if self.cfg.asset.name == "k1":
-            return torch.exp(torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -6.0) * self._k1_both_feet_support() * self._k1_ball_settled_or_past().float()
+            upright = torch.exp(torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -6.5)
+            base_z = self.root_states[:, 2] - self.env_origins[:, 2]
+            height_ok = torch.exp(-25.0 * torch.square(base_z - self.cfg.init_state.pos[2]))
+            return upright * (0.40 + 0.60 * height_ok) * self._k1_both_feet_support() * self._k1_ball_settled_or_past().float()
         behind = (self.ball_states[:, 0] - self.env_origins[:, 0] < 0.0) | (self.ball_states[:,7] - self.ball_vel > 2.0)
         return torch.exp(torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -3) * behind
 
@@ -2356,10 +2483,10 @@ class LeggedRobot(BaseTask):
             reward = torch.exp(-1.0 * torch.sum(sq_err, dim=-1))
             return reward * behind
         else:
-            behind = ((self.ball_states[:, 0] - self.env_origins[:, 0]) < 0.0) | (self.stop_flag > 0)
-            gate = 0.15 + 0.85 * self.success_flag * (1.0 - self.goal_conceded_flag)
-            reward = torch.exp(-2.0 * torch.mean(sq_err, dim=-1))
-            return reward * behind.float() * gate
+            settled = self._k1_ball_settled_or_past()
+            upright = torch.exp(-4.0 * torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1))
+            reward = torch.exp(-2.5 * torch.mean(sq_err, dim=-1))
+            return reward * (0.35 + 0.65 * upright) * settled.float()
 
     def _reward_head_track(self):
         """ Menghadiahi robot jika sendi kepala (yaw & pitch) mengarah mengikuti bola saat bola datang. """
@@ -2390,13 +2517,15 @@ class LeggedRobot(BaseTask):
     def _reward_stayonline(self):
         distance = torch.clip(torch.abs(self.torso_pos[:,0] - self.env_origins[:, 0]), 0.2, 1.2) - 0.2   
         if getattr(self.cfg.asset, "name", None) == "k1":
-            return distance * (0.30 + 0.70 * self._k1_ball_safe(include_behind=True).float())
+            # Enforce goal-line positioning only while the shot is live; allow free (x, y) recovery steps post-parry.
+            return distance * (~self._k1_ball_settled_or_past()).float()
         return distance
 
     def _reward_noretreat(self):
         pen = -1 * torch.clip(self.base_lin_vel[:, 0], -1.0, 0.0)
         if getattr(self.cfg.asset, "name", None) == "k1":
-            return pen * (0.30 + 0.70 * self._k1_ball_safe(include_behind=True).float())
+            # Allow backward recovery steps after the ball is cleared or past.
+            return pen * (~self._k1_ball_settled_or_past()).float()
         return pen
     
     def _reward_ang_vel_xy(self):

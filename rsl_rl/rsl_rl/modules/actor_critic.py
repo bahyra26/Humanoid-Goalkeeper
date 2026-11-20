@@ -262,3 +262,105 @@ class ActorCritic(nn.Module):
         value = self.critic(critic_observations)
 
         return value
+
+
+class WalkActorCritic(nn.Module):
+    """Lightweight history-conditioned actor-critic for locomotion tasks without ball/region heads."""
+
+    is_recurrent = False
+
+    def __init__(
+        self,
+        num_actor_obs,
+        num_critic_obs,
+        num_one_step_obs,
+        actor_history_length,
+        num_actions=22,
+        actor_hidden_dims=[512, 256, 128],
+        critic_hidden_dims=[512, 256, 128],
+        activation='elu',
+        init_noise_std=0.8,
+        history_latent_dim=16,
+        **kwargs,
+    ):
+        if kwargs:
+            print("WalkActorCritic.__init__ got unexpected arguments, which will be ignored: " + str(list(kwargs.keys())))
+        super().__init__()
+        act_fn = get_activation(activation)
+        self.num_actor_obs = num_actor_obs
+        self.num_critic_obs = num_critic_obs
+        self.num_one_step_obs = num_one_step_obs
+        self.actor_history_length = actor_history_length
+        self.num_actions = num_actions
+        self.history_latent_dim = history_latent_dim
+
+        hist_in = num_one_step_obs * actor_history_length
+        self.history_encoder = nn.Sequential(
+            nn.Linear(hist_in, 128),
+            nn.ELU(),
+            nn.Linear(128, 64),
+            nn.ELU(),
+            nn.Linear(64, history_latent_dim),
+        )
+
+        actor_layers = [nn.Linear(num_one_step_obs + history_latent_dim, actor_hidden_dims[0]), act_fn]
+        for l in range(len(actor_hidden_dims)):
+            if l == len(actor_hidden_dims) - 1:
+                actor_layers.append(nn.Linear(actor_hidden_dims[l], num_actions))
+            else:
+                actor_layers.append(nn.Linear(actor_hidden_dims[l], actor_hidden_dims[l + 1]))
+                actor_layers.append(act_fn)
+        self.actor = nn.Sequential(*actor_layers)
+        nn.init.orthogonal_(self.actor[-1].weight, gain=0.01)
+        nn.init.zeros_(self.actor[-1].bias)
+
+        critic_layers = [nn.Linear(num_critic_obs, critic_hidden_dims[0]), act_fn]
+        for l in range(len(critic_hidden_dims)):
+            if l == len(critic_hidden_dims) - 1:
+                critic_layers.append(nn.Linear(critic_hidden_dims[l], 1))
+            else:
+                critic_layers.append(nn.Linear(critic_hidden_dims[l], critic_hidden_dims[l + 1]))
+                critic_layers.append(act_fn)
+        self.critic = nn.Sequential(*critic_layers)
+
+        self.std = nn.Parameter(init_noise_std * torch.ones(num_actions))
+        self.distribution = None
+        Normal.set_default_validate_args = False
+
+    def reset(self, dones=None):
+        pass
+
+    @property
+    def action_mean(self):
+        return self.distribution.mean
+
+    @property
+    def action_std(self):
+        return self.distribution.stddev
+
+    @property
+    def entropy(self):
+        return self.distribution.entropy().sum(dim=-1)
+
+    def _actor_mean(self, obs_history):
+        latent = self.history_encoder(obs_history)
+        actor_in = torch.cat((obs_history[:, -self.num_one_step_obs:], latent), dim=-1)
+        return self.actor(actor_in)
+
+    def update_distribution(self, obs_history):
+        mean = self._actor_mean(obs_history)
+        std = torch.clamp(self.std, min=1e-2)
+        self.distribution = Normal(mean, mean * 0.0 + std)
+
+    def act(self, obs_history=None, **kwargs):
+        self.update_distribution(obs_history)
+        return self.distribution.sample(), None, None
+
+    def get_actions_log_prob(self, actions):
+        return self.distribution.log_prob(actions).sum(dim=-1)
+
+    def act_inference(self, obs_history, observations=None):
+        return self._actor_mean(obs_history)
+
+    def evaluate(self, critic_observations, **kwargs):
+        return self.critic(critic_observations)

@@ -82,6 +82,43 @@ class ArmAMPTests(unittest.TestCase):
             self.assertTrue((velocity.abs() <= bounds[:, 2] + 1e-5).all(), path.name)
             torch.testing.assert_close(velocity[:-1], torch.diff(position, dim=0) * 30)
 
+    def test_pyroki_clips_load_as_twenty_joint_amp_transitions(self):
+        folder = ROOT / 'legged_gym/resources/datasets/g1_to_k1_retargeted'
+        mapping = {name: int(i) for i, name in
+                   (line.split() for line in (folder / 'joint_id.txt').read_text().splitlines())}
+        joints = ET.parse(ROOT / 'legged_gym/resources/robots/k1/urdf/k1.urdf').findall('joint')
+        names = [j.get('name') for j in joints if j.get('type') == 'revolute' and 'head' not in j.get('name')]
+        self.assertEqual(len(names), 20)
+        self.assertEqual(set(names), set(mapping))
+        scope = extract('legged_gym/legged_gym/envs/g1/g1_utils.py', {'MotionLib'},
+                        {'torch': torch, 'math': math, 'tqdm': lambda x: x})
+        for skill in ('lefthand', 'righthand', 'leftjump', 'rightjump', 'leftstep', 'rightstep'):
+            clip = torch.load(folder / (skill + '.pt'), map_location='cpu')
+            lib = scope['MotionLib']([clip], mapping, names, [], amp_obs_type='dof')
+            sample = lib.get_expert_obs(32)
+            self.assertEqual(sample.shape, (32, 40))
+            self.assertTrue(torch.isfinite(sample).all())
+            torch.testing.assert_close(lib.motion_dof_pos, clip['joint_position'][:, [mapping[n] for n in names]])
+
+    @unittest.skipUnless(importlib.util.find_spec("pybullet"), "requires offline retarget dependency PyBullet")
+    def test_pyroki_urdf_clearance_at_240_hz(self):
+        path = ROOT / 'legged_gym/legged_gym/scripts/k1_self_collision.py'
+        spec = importlib.util.spec_from_file_location('k1_self_collision', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        resources = ROOT / 'legged_gym/resources'
+        folder = resources / 'datasets/g1_to_k1_retargeted'
+        names = [line.split()[1] for line in (folder / 'joint_id.txt').read_text().splitlines()]
+        check = module.K1CollisionCheck(resources / 'robots/k1/urdf/k1.urdf', names)
+        self.addCleanup(check.close)
+        for path in sorted(folder.glob('*.pt')):
+            poses = torch.load(path, map_location='cpu')['joint_position'].numpy()
+            for frame, (a, b) in enumerate(zip(poses, poses[1:])):
+                for step in range(8):
+                    pose = a + (b - a) * (step / 8)
+                    self.assertFalse(check.collisions(pose), (path.name, frame, step))
+            self.assertFalse(check.collisions(poses[-1]), path.name)
+
     def test_new_training_refuses_existing_checkpoints(self):
         config = NS(runner=NS(resume=False, experiment_name='k1'))
         with tempfile.TemporaryDirectory() as directory:

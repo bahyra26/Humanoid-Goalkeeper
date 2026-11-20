@@ -40,4 +40,8 @@ from legged_gym.utils.task_registry import task_registry
 task_registry.register( "29", LeggedRobot, G129Cfg(), G129CfgPPO() )
 
 from .k1.k1_config import K1Cfg, K1CfgPPO
+from .k1.k1_walk import K1WalkEnv
+from .k1.k1_walk_config import K1WalkCfg, K1WalkCfgPPO
+
 task_registry.register( "k1", LeggedRobot, K1Cfg(), K1CfgPPO() )
+task_registry.register( "k1_walk", K1WalkEnv, K1WalkCfg(), K1WalkCfgPPO() )

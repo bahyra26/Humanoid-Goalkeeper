@@ -13,6 +13,7 @@ fi
 
 # python -c membiarkan stdin tersedia untuk kontrol interaktif viewer.
 exec python -c '
+import math
 import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -22,9 +23,9 @@ mass = 0.200
 inertia = 2 * mass * radius**2 / 3  # Model kulit bola tipis seperti aset K1 asli.
 ball = Path("legged_gym/resources/gymassets/urdf/ball_k1.urdf").resolve()
 link = ET.parse(ball).find("link")
-assert all(float(link.find(f"{s}/geometry/sphere").get("radius")) == radius for s in ("visual", "collision"))
-assert float(link.find("inertial/mass").get("value")) == mass
-assert all(float(link.find("inertial/inertia").get(a)) == inertia for a in ("ixx", "iyy", "izz"))
+assert all(math.isclose(float(link.find(f"{s}/geometry/sphere").get("radius")), radius, rel_tol=1e-9) for s in ("visual", "collision"))
+assert math.isclose(float(link.find("inertial/mass").get("value")), mass, rel_tol=1e-9)
+assert all(math.isclose(float(link.find("inertial/inertia").get(a)), inertia, rel_tol=1e-9) for a in ("ixx", "iyy", "izz"))
 print(f"K1 Size 1 | massa {mass:g} kg | radius {radius:g} m | inersia {inertia:g} kg m²", flush=True)
 if sys.argv[1:] == ["--check"]:
     sys.exit(0)

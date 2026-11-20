@@ -28,40 +28,41 @@ class K1Cfg(LeggedRobotCfg):
         ball_radius = 0.075  # Matches ball_k1.urdf (Size 1 baseline: 0.200 kg, r=0.075 m).
 
     class commands:
-        train_speed_range = [9.0, 14.5]  # Campuran cepat (55%): ~9.5-15 m/s dgn flight 0.42-0.56 s; 45% standar
-        train_fast_ratio = 0.55
-        train_kolong_ratio = 0.25  # 25% tembakan rendah standar difokuskan ke celah kolong (|y| <= 0.24 m)
+        train_speed_range = [8.5, 14.0]  # 70% pelan/standar + 30% kenceng (~8.5-14 m/s) untuk keseimbangan save
+        train_fast_ratio = 0.30
+        train_kolong_ratio = 0.30  # 30% tembakan rendah (pelan & kenceng) fokus celah kolong (|y| <= 0.24 m)
+        train_high_corner_ratio = 0.50  # 50% tembakan tinggi R2/R3 fokus pojok atas terjangkau kiri-kanan simetris
         # Gawang RoboCup KidSize: Lebar 2.6 m (-1.3 m s/d +1.3 m), Tinggi Mistar 1.2 m (0.075 m s/d 1.2 m; radius bola = 0.075 m)
         # Konvensi koordinat robot: +X depan, +Y sisi kiri robot (kanan penendang), -Y sisi kanan robot (kiri penendang)
         class ranges_0: # Samping Kiri Robot / Kanan Penendang (Tinggi Sedang)
             height = [0.35, 0.85] 
-            width =  [0.05, 0.75]
+            width =  [0.0, 0.75]
             maxh = [0.30, 0.90]
-            maxw = [0.0, 1.25]
+            maxw = [0.0, 1.20]
             evalh = [0.35, 0.85]
             evalw = [0.05, 0.75]
 
         class ranges_1: # Samping Kanan Robot / Kiri Penendang (Tinggi Sedang)
             height = [0.35, 0.85] 
-            width = [-0.75, -0.05]
+            width = [-0.75, 0.0]
             maxh = [0.30, 0.90] 
-            maxw = [-1.25, 0.0]
+            maxw = [-1.20, 0.0]
             evalh = [0.35, 0.85]
             evalw = [-0.75, -0.05]
 
         class ranges_2: # Atas Kiri Robot / Kanan Penendang (Area Lompat - Menuju Mistar 1.2 m)
             height = [0.80, 1.15] 
-            width = [0.05, 0.70]
+            width = [0.05, 0.75]
             maxh = [0.80, 1.18] 
-            maxw = [0.0, 1.20]
+            maxw = [0.0, 1.05]
             evalh = [0.80, 1.15] 
             evalw = [0.05, 0.70]
 
         class ranges_3: # Atas Kanan Robot / Kiri Penendang (Area Lompat - Menuju Mistar 1.2 m)
             height = [0.80, 1.15] 
-            width = [-0.70, -0.05]
+            width = [-0.75, -0.05]
             maxh = [0.80, 1.18] 
-            maxw = [-1.20, 0.0]
+            maxw = [-1.05, 0.0]
             evalh = [0.80, 1.15] 
             evalw = [-0.70, -0.05]
 
@@ -69,7 +70,7 @@ class K1Cfg(LeggedRobotCfg):
             height = [0.11, 0.35] 
             width = [0.0, 0.75]
             maxh = [0.11, 0.35]
-            maxw = [0.0, 1.25]
+            maxw = [0.0, 1.20]
             evalh = [0.11, 0.35] 
             evalw = [0.0, 0.75]
 
@@ -77,7 +78,7 @@ class K1Cfg(LeggedRobotCfg):
             height = [0.11, 0.35] 
             width = [-0.75, 0.0]
             maxh = [0.11, 0.35]
-            maxw = [-1.25, 0.0]
+            maxw = [-1.20, 0.0]
             evalh = [0.11, 0.35] 
             evalw = [-0.75, 0.0]
 
@@ -103,29 +104,30 @@ class K1Cfg(LeggedRobotCfg):
             'right_elbow_yaw_joint': 0.65,
 
             'left_hip_pitch_joint': -0.28,
-            'left_hip_roll_joint': 0.10,
+            'left_hip_roll_joint': 0.04,          # celah dalam kaki 14.2 cm < 15.0 cm bola Size 1 (anti-kolong)
             'left_hip_yaw_joint': 0.0,
             'left_knee_pitch_joint': 0.58,        # kuda-kuda atletis stabil & siap melompat/menekuk
             'left_ankle_pitch_joint': -0.28,
-            'left_ankle_roll_joint': -0.10,
+            'left_ankle_roll_joint': -0.04,
 
             'right_hip_pitch_joint': -0.28,
-            'right_hip_roll_joint': -0.10,
+            'right_hip_roll_joint': -0.04,
             'right_hip_yaw_joint': 0.0,
             'right_knee_pitch_joint': 0.58,
             'right_ankle_pitch_joint': -0.28,
-            'right_ankle_roll_joint': 0.10,
+            'right_ankle_roll_joint': 0.04,
         }
         # Urutan DOF sesuai URDF (head 2, lengan kiri 4, lengan kanan 4, kaki kiri 6, kaki kanan 6)
         init_pos = [0.0, 0.15,
                     -0.25, -0.35, 0.0, -0.65,
                     -0.25, 0.35, 0.0, 0.65,
-                    -0.28, 0.10, 0.0, 0.58, -0.28, -0.10,
-                    -0.28, -0.10, 0.0, 0.58, -0.28, 0.10]
+                    -0.28, 0.04, 0.0, 0.58, -0.28, -0.04,
+                    -0.28, -0.04, 0.0, 0.58, -0.28, 0.04]
 
     class control(LeggedRobotCfg.control):
         control_type = 'P'
-        limit_joint_targets = False  # Enable only for paired simulation trials first.
+        limit_joint_targets = True  # Clamp PD targets at hard URDF limits so shoulders/head never command past stops.
+        limit_targets_upper_only = True  # Legs tetap bebas: tolakan lompat & langkah samping seagresif model awal.
         stiffness = {
             'head': 12.0,
             'shoulder': 42.0,
@@ -266,12 +268,12 @@ class K1Cfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         only_positive_rewards = False
         class scales:
-            eereach = 26.0
+            eereach = 32.0
             success = 40.0  # Terminal safe-ball bonus; independent of control timestep.
-            recovery = 25.0  # Terminal bonus after 0.5 s of safe, stable recovery.
-            goal_conceded = -220.0  # Terminal penalty, including goals after a touch.
+            recovery = 30.0  # Terminal EMA bonus for calm upright ready-stance recovery.
+            goal_conceded = -280.0  # Terminal penalty, including goals after a touch; lebih mahal dari jatuh agar berani lompat.
             stopball = 450.0
-            termination = -220.0
+            termination = -150.0
             stayonline = -1.0
             noretreat = -1.0
             successland = 14.0
@@ -280,20 +282,20 @@ class K1Cfg(LeggedRobotCfg):
             penalize_sharpcontact = -15.
             penalize_kneeheight = -100.
             collision = -4.0
-            arm_overhead = -22.0
-            kolong_gap = -120.0
-            feet_slippage = 2.5
-            postorientation = 10.0
+            arm_overhead = -10.0
+            kolong_gap = -140.0
+            feet_slippage = 1.5
+            postorientation = 8.0
             postangvel = 3.0
-            postupperdofpos = 0.0
-            post_hold = 12.0
-            postlinvel = 2.5
+            postupperdofpos = 5.0
+            post_hold = 9.0
+            postlinvel = 2.0
             head_track = 1.0
             ang_vel_xy = -0.07
             dof_acc = -2.0e-7
-            smoothness = -0.035
+            smoothness = -0.045
             torques = -1e-5
-            dof_vel = -2e-4
+            dof_vel = -3e-4
             dof_pos_limits = -4.5
             dof_vel_limits = -1.0
             torque_limits = -1.0
@@ -307,7 +309,7 @@ class K1Cfg(LeggedRobotCfg):
         tracking_sigma = 0.25
         catch_sigma = 5.0
 
-        soft_dof_pos_limit = 0.9
+        soft_dof_pos_limit = 0.90
         soft_dof_vel_limit = 0.9
         soft_torque_limit = 0.95
         max_contact_force = 1100.
@@ -335,9 +337,11 @@ class K1CfgPPO(LeggedRobotCfgPPO):
         init_noise_std = 0.75
 
     class algorithm(LeggedRobotCfgPPO.algorithm):
-        entropy_coef = 0.004
+        entropy_coef = 0.0005
         num_learning_epochs = 4
         num_mini_batches = 8
+        learning_rate = 4.0e-5
+        schedule = 'fixed'
         smoothness_lower_bound = 0.02
         smoothness_upper_bound = 1.0
 

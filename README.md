@@ -52,6 +52,33 @@ The choice of demo policy came down to a trade-off. The two finalists finished t
 
 The random benchmark used evaluation seeds 1, 777, and 2026. A run without a goalkeeper identified the 4,312 shots that would have scored. The evaluator checked ball contact, goal crossing, and the final ball state. Falls use all 4,320 trials as their denominator. A separate set of 69 fixed shots covers sprint, between-the-legs, motion, and high-ball scenarios. Performance on a physical K1 and repeatability across training seeds remain open questions. [Outcome definitions](legged_gym/legged_gym/utils/shot_outcome.py)
 
+### Two-policy walk-back, balanced speeds, and joint-limit updates
+
+Follow-up work after Run G/I addressed five practical issues observed in simulation: post-parry jitter/drifting, slow-vs-fast shot balance, upper-corner joint-limit overshoot, standing five-hole (*kolong*) gaps, and jump aggressiveness.
+
+- **Two-policy architecture (`Policy 1 + Policy 2`):** [k1_two_policy.py](legged_gym/legged_gym/utils/k1_two_policy.py) keeps Policy 1 (`k1`) active during incoming shots and live rebounds. Once the ball is strictly cleared for `0.24 s`, a 6-step linear blend hands control to Policy 2 (`k1_walk`, trained with `WalkActorCritic` and `10,151` recorded post-parry landing states in [k1_walk.py](legged_gym/legged_gym/envs/k1/k1_walk.py)) to stabilize upright and walk back to `(0, 0, yaw = 0)` (`READY_HOME`). Any re-approaching shot preempts back to Policy 1 immediately.
+- **70/30 speed mix and symmetric corner/low shots:** [k1_config.py](legged_gym/legged_gym/envs/k1/k1_config.py) sets `train_fast_ratio = 0.30` (`70%` standard, `30%` fast `[8.5, 14.0] m/s`), `train_kolong_ratio = 0.30` across both slow and fast low shots, and `train_high_corner_ratio = 0.50` across `R2/R3`.
+- **Upper-body joint-target guard (`limit_targets_upper_only = True`):** PD position targets for all 10 arm and head joints are clamped to URDF mechanical limits (`0.0%` target overshoot), while leg targets remain unclamped so explosive jump takeoff and lateral push-off are preserved.
+- **Anti-kolong ready stance:** narrowing `hip_roll = ±0.04` and `ankle_roll = ∓0.04` closes the initial standing inner foot gap from `18.7 cm` (`> 15.0 cm` ball) to `14.6 cm` (`< 15.0 cm` ball), with a tightened `0.20 m` center-gap threshold in `_reward_kolong_gap`.
+
+Head-to-head comparison on seed `1` (`360` random shots per speed mode, `69` fixed shots) and `12 s` 2-policy E2E evaluation (`120` `STD` + `120` `12 m/s @ 5 m` shots), each evaluated in its native configuration ([legacy benchmark](evaluation/k1_stage1_legacy_benchmark.json) · [v11/v13 benchmark](evaluation/k1_v11_v13_benchmark.json)):
+
+| Metric | Legacy (`landfix_5350 + walk_v4_2400`, `--legacy`) | Balanced (`v11_6000 + walk_v5_2700`, recommended) | Agile (`v13_5800 + walk_v5_2700`) |
+| --- | :---: | :---: | :---: |
+| Standard (`STD`) save rate | `82.5%` | **`85.0%`** | `77.2%` |
+| Fast `10 m/s` save rate | `37.0%` | **`39.5%`** | `37.0%` |
+| Fast `12 m/s @ 5 m` save rate | `41.7%` | **`43.6%`** | `34.4%` |
+| Fast `14 m/s @ 6 m` save rate | `37.8%` | **`43.1%`** | `29.7%` |
+| 4-mode average save rate | `49.7%` | **`52.8%`** | `44.6%` |
+| `HIGH_GRID_30` (upper corners) | `9/30` | `8/30` | **`11/30`** |
+| `KOLONG_12` / `MOTION_9` / `SPRINT1_18` | `7/12` · `7/9` · `16/18` | `6/12` · **`9/9`** · `16/18` | **`8/12`** · **`9/9`** · `16/18` |
+| Upper-body PD target `> hard` URDF | up to `33.1%` | **`0.0%`** | **`0.0%`** |
+| Standing inner foot gap (`15.0 cm` ball) | `18.7 cm` | **`14.6 cm`** | **`14.6 cm`** |
+| 2-policy E2E falls (`STD` / `12 m/s`, `12 s`) | **`0/120`** / **`3/120`** (`p2 = 0`) | `3/120` / `9/120` (`p2 = 1 / 3`) | `3/120` / **`3/120`** (`p2 = 1 / 2`) |
+| 2-policy E2E `HOME` (`240` shots) & jitter `\|da\|` | **`234/240`** · `0.0013–0.0014` | `226/240` · `0.0012–0.0013` | **`234/240`** · **`0.0011`** |
+
+`v11_6000 + walk_v5_2700` is the recommended general-purpose pair: it achieves the highest save rate at every speed (`85.0%` `STD`, `52.8%` 4-mode average) with even `R0..R5` coverage (`47..54 / 60` on `STD`), `8/30` on `HIGH_GRID_30`, `0.0%` upper-body target overshoot, and an anti-kolong `14.6 cm` standing gap. `v13_5800 + walk_v5_2700` is the specialist for aggressive high-corner leaps (`11/30` `HIGH_GRID_30`, `3/120` `12 m/s` E2E falls) at a lower average save rate (`44.6%`). Note: the `v11`/`v13` table above is single-seed (`seed 1`), and `walk_v5_2700` was trained before `limit_targets_upper_only = True` was enabled (leaving `1–3/120` Policy 2 falls vs `0/240` when legs were clamped); multi-seed verification and a short `k1_walk` re-polish remain open items.
+
 ## Internship report
 
 The [working report](docs/run_e_results.md) contains the experimental setup, results tables, and notes for the write-up. The final internship PDF is pending. Its reserved location is `docs/k1-internship-report.pdf`.
@@ -76,11 +103,15 @@ The viewer loads local weights from `legged_gym/logs/k1/<experiment>/model_<iter
 
 ```bash
 ./play_k1_size1.sh --check
-./play_k1_size1.sh --exptid k1_v9_s1_landfix --checkpoint 5350
-./play_k1_size1.sh --exptid k1_v9_s1_gema25 --checkpoint 5400
+# Recommended 2-policy balanced goalkeeper (upper-body guard + anti-kolong stance):
+./play_k1_size1.sh --exptid k1_v11_balanced_p2 --checkpoint 6000 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt --ball_speed 12 --start_x 5 --seed 100
+# Aggressive upper-corner leap variant:
+./play_k1_size1.sh --exptid k1_v13_agile --checkpoint 5800 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v5/model_2700.pt --ball_speed 12 --start_x 5 --seed 100
+# Legacy Run G baseline in its original stance (hip/ankle roll ±0.10, no target clamp):
+./play_k1_size1.sh --legacy --exptid k1_v9_s1_landfix --checkpoint 5350 --walk_ckpt legged_gym/logs/k1_walk/k1_walk_v4/model_2400.pt --ball_speed 12 --start_x 5 --seed 100
 ```
 
-To launch from 3 m at 8 m/s, append `--start_x 3 --ball_speed 8`. Set `--target_y` and `--target_z` to aim at a particular point in metres. If the solver reports a minimum launch speed, move the launch point closer or increase the speed. The viewer requires an active graphical session.
+Omit `--ball_speed 12 --start_x 5` for standard-speed (`STD`) shots. Set `--target_y` and `--target_z` to aim at a specific point in metres, or use viewer hotkeys (`F`/`G` speed, `0..5` region, `6` random, `Q`/`E` distance, `R`/`Enter` re-shoot). Use `--legacy` whenever replaying checkpoints trained before the `±0.04` anti-kolong stance and target-clamp update. The viewer requires an active graphical session.
 
 ## Train and evaluate
 
@@ -88,7 +119,8 @@ Use a fresh experiment ID for each run. The second command resumes from the sele
 
 ```bash
 python legged_gym/legged_gym/scripts/train.py --task k1 --exptid k1_local_train --seed 1 --num_envs 1536 --headless
-python legged_gym/legged_gym/scripts/train.py --task k1 --resume --resumeid k1_v9_s1_landfix --checkpoint 5350 --exptid k1_local_resume --seed 1 --max_iterations 50 --num_envs 1536 --headless
+python legged_gym/legged_gym/scripts/train.py --task k1 --resume --resumeid k1_v9_s1_landfix --checkpoint 5350 --exptid k1_local_resume --seed 1 --max_iterations 300 --num_envs 1536 --headless
+python legged_gym/legged_gym/scripts/train.py --task k1_walk --exptid k1_walk_local --seed 1 --num_envs 2048 --headless
 ```
 
 The paired benchmark needs the evaluation checkpoints passed via `--models` and the shot lists under `evaluation/`. The example writes to a separate results file. [Benchmark script](legged_gym/legged_gym/scripts/benchmark_k1.py)
@@ -106,6 +138,8 @@ python -m unittest discover -s tests -v
 | Topic | Where to look |
 |---|---|
 | Observations, actions, and rewards | [K1 configuration](legged_gym/legged_gym/envs/k1/k1_config.py) and [environment code](legged_gym/legged_gym/envs/base/legged_robot.py) |
+| Two-policy walk-back & handover | [Walk environment](legged_gym/legged_gym/envs/k1/k1_walk.py), [walk config](legged_gym/legged_gym/envs/k1/k1_walk_config.py), and [state machine](legged_gym/legged_gym/utils/k1_two_policy.py) |
+| Unit tests (`74` tests) | [Tests directory](tests/) (including [2-policy tests](tests/test_k1_two_policy.py) and [target guard tests](tests/test_joint_target_guard.py)) |
 | Reward calibration | [Calibration experiments](evaluation/K1_REWARD_CALIBRATION.md) |
 | Shot lists and benchmark outputs | [Evaluation directory](evaluation/) |
 | Underlying simulation and training libraries | [legged_gym](legged_gym/README.md) and [rsl_rl](rsl_rl/README.md) |

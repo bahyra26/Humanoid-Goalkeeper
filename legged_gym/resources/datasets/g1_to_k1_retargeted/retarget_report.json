@@ -1,0 +1,50 @@
+{
+  "method": "PyRoki FK and bounded trajectory IK, limb vectors and foot axes in pelvis frame",
+  "error": "Distance to scaled elbow, hand, knee and ankle targets relative to shoulder or hip",
+  "collision_check": "PyBullet K1 URDF, direct-parent pairs excluded, head yaw 0 and pitch 0.15 rad, linear joint interpolation at 120 Hz",
+  "fps": 30,
+  "clips": {
+    "lefthand": {
+      "frames": 123,
+      "mean_error_m": 0.014077505340654347,
+      "max_error_m": 0.05631556840571207,
+      "self_collision_samples": 489,
+      "penetrating_samples": 0
+    },
+    "righthand": {
+      "frames": 246,
+      "mean_error_m": 0.010143887629875913,
+      "max_error_m": 0.08091896434654793,
+      "self_collision_samples": 981,
+      "penetrating_samples": 0
+    },
+    "leftjump": {
+      "frames": 254,
+      "mean_error_m": 0.013380106628441902,
+      "max_error_m": 0.11667385245570273,
+      "self_collision_samples": 1013,
+      "penetrating_samples": 0
+    },
+    "rightjump": {
+      "frames": 200,
+      "mean_error_m": 0.014770263677838126,
+      "max_error_m": 0.10576992976930186,
+      "self_collision_samples": 797,
+      "penetrating_samples": 0
+    },
+    "leftstep": {
+      "frames": 194,
+      "mean_error_m": 0.012114901263139582,
+      "max_error_m": 0.027888678609853022,
+      "self_collision_samples": 773,
+      "penetrating_samples": 0
+    },
+    "rightstep": {
+      "frames": 197,
+      "mean_error_m": 0.010035486350796553,
+      "max_error_m": 0.020245423577737547,
+      "self_collision_samples": 785,
+      "penetrating_samples": 0
+    }
+  }
+}

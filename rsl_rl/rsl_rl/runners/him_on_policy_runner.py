@@ -39,7 +39,7 @@ import torch
 
 import rsl_rl
 from rsl_rl.algorithms import HIMPPO
-from rsl_rl.modules import ActorCritic
+from rsl_rl.modules import ActorCritic, WalkActorCritic
 
 from rsl_rl.env import VecEnv
 from rsl_rl.utils import store_code_state
@@ -92,12 +92,13 @@ class HIMOnPolicyRunner:
 
 
         alg_class = eval(self.cfg["algorithm_class_name"]) # HIMPPO
-        self.alg: HIMPPO = alg_class(actor_critic,  amp=amp, amp_normalizer=amp_normalizer,motion_buffer=self.env.motions, device=self.device, **self.alg_cfg)
+        self.alg: HIMPPO = alg_class(actor_critic, amp=amp, amp_normalizer=amp_normalizer, motion_buffer=getattr(self.env, 'motions', None), device=self.device, **self.alg_cfg)
         self.num_steps_per_env = self.cfg["num_steps_per_env"]
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions],  [self.env.num_amp_obs])
+        num_amp_obs = getattr(self.env, 'num_amp_obs', 1)
+        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions], [num_amp_obs])
 
         # Log
         self.log_dir = log_dir
@@ -157,7 +158,11 @@ class HIMOnPolicyRunner:
                     for i in range(self.num_steps_per_env):
                         actions = self.alg.act(obs, critic_obs)
                         old_amp_state = amp_state
-                        motion_ids = (3 * critic_obs[:, self.alg.actor_critic.num_one_step_obs + 3]).round().long()
+                        motion_ids = (
+                            (3 * critic_obs[:, self.alg.actor_critic.num_one_step_obs + 3]).round().long()
+                            if self.amp_coef > 0
+                            else None
+                        )
                         obs, privileged_obs, raw_rewards, dones, infos, termination_ids, termination_privileged_obs = self.env.step(actions)
 
                         critic_obs = privileged_obs if privileged_obs is not None else obs
@@ -227,10 +232,10 @@ class HIMOnPolicyRunner:
                 if self.log_dir is not None:
                     self.log(locals())
                 self.current_learning_iteration = it + 1
-                if self.current_learning_iteration % self.save_interval == 0:
+                if self.log_dir is not None and self.current_learning_iteration % self.save_interval == 0:
                     self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
                 ep_infos.clear()
-                if it == start_iter:
+                if self.log_dir is not None and it == start_iter:
                     # obtain all the diff files
                     git_file_paths = store_code_state(self.log_dir, self.git_status_repos)
                     # if possible store them to wandb
@@ -244,7 +249,8 @@ class HIMOnPolicyRunner:
                 self.save(ckpt_path)
             return
 
-        self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
+        if self.log_dir is not None:
+            self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
 
     def log(self, locs, width=80, pad=35):
         self.tot_timesteps += self.num_steps_per_env * self.env.num_envs
@@ -322,8 +328,8 @@ class HIMOnPolicyRunner:
                        f"""{'Total timesteps:':>{pad}} {self.tot_timesteps}\n"""
                        f"""{'Iteration time:':>{pad}} {iteration_time:.2f}s\n"""
                        f"""{'Total time:':>{pad}} {self.tot_time:.2f}s\n"""
-                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] + 1) * (
-                               locs['num_learning_iterations'] - locs['it']):.1f}s\n""")
+                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] - locs['start_iter'] + 1) * (
+                               locs['tot_iter'] - locs['it'] - 1):.1f}s\n""")
         print(log_string)
 
 
@@ -392,8 +398,8 @@ class HIMOnPolicyRunner:
                        f"""{'Total timesteps:':>{pad}} {self.tot_timesteps}\n"""
                        f"""{'Iteration time:':>{pad}} {iteration_time:.2f}s\n"""
                        f"""{'Total time:':>{pad}} {self.tot_time:.2f}s\n"""
-                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] + 1) * (
-                               locs['num_learning_iterations'] - locs['it']):.1f}s\n""")
+                       f"""{'ETA:':>{pad}} {self.tot_time / (locs['it'] - locs['start_iter'] + 1) * (
+                               locs['tot_iter'] - locs['it'] - 1):.1f}s\n""")
         print(log_string)
 
 
@@ -460,13 +466,13 @@ class HIMOnPolicyRunner:
 
     def train_mode(self):
         self.alg.actor_critic.train()
-        if self.empirical_normalization:
+        if getattr(self, "empirical_normalization", False):
             self.obs_normalizer.train()
             self.critic_obs_normalizer.train()
 
     def eval_mode(self):
         self.alg.actor_critic.eval()
-        if self.empirical_normalization:
+        if getattr(self, "empirical_normalization", False):
             self.obs_normalizer.eval()
             self.critic_obs_normalizer.eval()
 

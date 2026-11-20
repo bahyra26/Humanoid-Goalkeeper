@@ -132,7 +132,7 @@ class HIMPPO:
         self.storage = HIMRolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, amp_obs_shape, self.device)
 
     def test_mode(self):
-        self.actor_critic.test()
+        self.actor_critic.eval()
     
     def train_mode(self):
         self.actor_critic.train()
@@ -160,7 +160,8 @@ class HIMPPO:
         self.transition.dones = dones
         # Bootstrapping on time outs
         if 'time_outs' in infos:
-            self.transition.rewards += self.gamma * torch.squeeze(self.transition.values * infos['time_outs'].unsqueeze(1).to(self.device), 1)
+            valid_time_outs = infos['time_outs'].to(self.device).bool() & dones.to(self.device).bool()
+            self.transition.rewards += self.gamma * torch.squeeze(self.transition.values * valid_time_outs.unsqueeze(1).float(), 1)
 
         # Record the transition
         self.storage.add_transitions(self.transition)
@@ -180,7 +181,7 @@ class HIMPPO:
         mean_surrogate_loss = 0
         mean_est_loss = 0
         mean_region_loss = 0
-        amp_loss, expert_loss, policy_loss = 0.0, 0.0, 0.0
+        mean_amp_loss, mean_expert_loss, mean_policy_loss = 0.0, 0.0, 0.0
 
         generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
 
@@ -188,9 +189,6 @@ class HIMPPO:
             old_mu_batch, old_sigma_batch, amp_obs_batch in generator:
 
                 _, estball_batch, estregion_batch = self.actor_critic.act(obs_batch)
-                
-                gtball_batch = critic_obs_batch[:, -13:-7]
-                gtregion_batch = (3 * critic_obs_batch[:, -14]).long()
 
                 actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
                 value_batch = self.actor_critic.evaluate(critic_obs_batch)
@@ -228,11 +226,17 @@ class HIMPPO:
                     value_loss = torch.max(value_losses, value_losses_clipped).mean()
                 else:
                     value_loss = (returns_batch - value_batch).pow(2).mean()
-                
-                # est ball loss
-                est_loss = (estball_batch - gtball_batch).pow(2).mean()
-                region_loss = nn.CrossEntropyLoss()(estregion_batch, gtregion_batch)
-                loss = surrogate_loss + est_loss + region_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
+
+                if estball_batch is not None and estregion_batch is not None:
+                    gtball_batch = critic_obs_batch[:, -13:-7]
+                    gtregion_batch = (3 * critic_obs_batch[:, -14]).long()
+                    est_loss = (estball_batch - gtball_batch).pow(2).mean()
+                    region_loss = nn.CrossEntropyLoss()(estregion_batch, gtregion_batch)
+                    loss = surrogate_loss + est_loss + region_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
+                else:
+                    est_loss = None
+                    region_loss = None
+                    loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
 
                 # Smooth loss
                 epsilon = self.smoothness_lower_bound / (self.smoothness_upper_bound - self.smoothness_lower_bound)
@@ -308,6 +312,9 @@ class HIMPPO:
 
 
                     loss += amp_loss
+                    mean_amp_loss += float(amp_loss.item()) if isinstance(amp_loss, torch.Tensor) else float(amp_loss)
+                    mean_expert_loss += float(expert_loss.item()) if isinstance(expert_loss, torch.Tensor) else float(expert_loss)
+                    mean_policy_loss += float(policy_loss.item()) if isinstance(policy_loss, torch.Tensor) else float(policy_loss)
                     self.amp_normalizer.update(raw_amp_obs_batch.cpu().detach().numpy())
                     self.amp_normalizer.update(amp_expert_obs_batch_mask.cpu().detach().numpy())
 
@@ -318,16 +325,19 @@ class HIMPPO:
                 self.optimizer.step()
                 mean_value_loss += value_loss.item()
                 mean_surrogate_loss += surrogate_loss.item()
-                mean_est_loss += est_loss.item()
-                mean_region_loss += region_loss.item()
+                mean_est_loss += est_loss.item() if est_loss is not None else 0.0
+                mean_region_loss += region_loss.item() if region_loss is not None else 0.0
 
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
         mean_est_loss /= num_updates
         mean_region_loss /= num_updates
+        mean_amp_loss /= num_updates
+        mean_expert_loss /= num_updates
+        mean_policy_loss /= num_updates
 
 
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_est_loss, mean_region_loss, amp_loss, expert_loss, policy_loss
+        return mean_value_loss, mean_surrogate_loss, mean_est_loss, mean_region_loss, mean_amp_loss, mean_expert_loss, mean_policy_loss

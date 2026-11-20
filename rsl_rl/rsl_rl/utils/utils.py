@@ -30,7 +30,10 @@
 
 from __future__ import annotations
 
-import git
+try:
+    import git
+except ImportError:
+    git = None
 import os
 import pathlib
 import torch
@@ -78,6 +81,8 @@ def unpad_trajectories(trajectories, masks):
     return trajectories.transpose(1, 0)[masks.transpose(1, 0)].view(-1, trajectories.shape[0], trajectories.shape[-1]).transpose(1, 0)
 
 def store_code_state(logdir, repositories) -> list:
+    if git is None:
+        return []
     git_log_dir = os.path.join(logdir, "git")
     os.makedirs(git_log_dir, exist_ok=True)
     file_paths = []
@@ -97,7 +102,7 @@ def store_code_state(logdir, repositories) -> list:
             continue
         # write the diff file
         print(f"Storing git diff for '{repo_name}' in: {diff_file_name}")
-        with open(diff_file_name, "x") as f:
+        with open(diff_file_name, "x", encoding="utf-8") as f:
             content = f"--- git status ---\n{repo.git.status()} \n\n\n--- git diff ---\n{repo.git.diff(t)}"
             # print(content)
             f.write(content)

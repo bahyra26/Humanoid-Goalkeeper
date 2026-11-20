@@ -40,10 +40,19 @@ from isaacgym import gymapi
 import torch
 
 def train(args):
-    if args.arm_amp:
+    if args.arm_amp and args.pyroki_amp:
+        raise ValueError('Choose one AMP dataset')
+    if args.arm_amp or args.pyroki_amp:
         if args.task != 'k1':
-            raise ValueError('--arm_amp requires --task k1')
+            raise ValueError('K1 AMP requires --task k1')
         env_cfg, train_cfg = task_registry.get_cfgs('k1')
+        if args.pyroki_amp:
+            env_cfg.dataset.folder = "{LEGGED_GYM_ROOT_DIR}/resources/datasets/g1_to_k1_retargeted"
+            env_cfg.dataset.joint_mapping = env_cfg.dataset.folder + "/joint_id.txt"
+            ctrl = env_cfg.control
+            env_cfg.amp.joint_names = (ctrl.left_arm_joints + ctrl.right_arm_joints
+                                       + ctrl.left_leg_joints + ctrl.right_leg_joints)
+            env_cfg.amp.num_obs = len(env_cfg.amp.joint_names) * env_cfg.amp.num_steps
         env_cfg.amp.amp_coef = 0.1
         train_cfg.amp = env_cfg.amp
     env, env_cfg = task_registry.make_env(name=args.task, args=args)
@@ -60,11 +69,34 @@ def train(args):
     save_path = os.path.join(LEGGED_GYM_ROOT_DIR)
     ppo_runner, train_cfg = task_registry.make_alg_runner(env=env, name=args.task, args=args, log_root=save_path)
 
+    if train_cfg.runner.resume and getattr(train_cfg.algorithm, 'schedule', None) == 'fixed':
+        target_lr = float(train_cfg.algorithm.learning_rate)
+        ppo_runner.alg.learning_rate = target_lr
+        for g in ppo_runner.alg.optimizer.param_groups:
+            g['lr'] = target_lr
+
+    if (
+        args.task == 'k1'
+        and train_cfg.runner.resume
+        and getattr(ppo_runner, 'current_learning_iteration', 0) >= 1000
+        and hasattr(env, 'curriculumupdate')
+        and hasattr(env, 'command_init_ranges')
+    ):
+        env.common_step_counter = max(int(env.common_step_counter), 3000)
+        env.curriculumupdate = max(int(env.curriculumupdate), 1)
+        expand = 0.18 * env.curriculumupdate
+        env.command_ranges[:, 0] = torch.clip(env.command_init_ranges[:, 0] - expand, env.command_bound[:, 0], env.command_bound[:, 1])
+        env.command_ranges[:, 1] = torch.clip(env.command_init_ranges[:, 1] + expand, env.command_bound[:, 0], env.command_bound[:, 1])
+        env.command_ranges[:, 2] = torch.clip(env.command_init_ranges[:, 2] - expand, env.command_bound[:, 2], env.command_bound[:, 3])
+        env.command_ranges[:, 3] = torch.clip(env.command_init_ranges[:, 3] + expand, env.command_bound[:, 2], env.command_bound[:, 3])
+
     ppo_runner.learn(num_learning_iterations=train_cfg.runner.max_iterations, init_at_random_ep_len=True)
 
 if __name__ == '__main__':
     args = get_args([{'name': '--arm_amp', 'action': 'store_true',
-                      'help': 'Enable the retargeted eight-joint K1 arm AMP prior.'}])
+                      'help': 'Enable the retargeted eight-joint K1 arm AMP prior.'},
+                     {'name': '--pyroki_amp', 'action': 'store_true',
+                      'help': 'Enable the PyRoki K1 arm and leg AMP prior.'}])
     if args.exptid is None:
         args.exptid = 'goalkeeper'
 

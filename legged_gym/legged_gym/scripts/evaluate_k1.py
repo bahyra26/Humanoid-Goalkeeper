@@ -32,6 +32,7 @@ def reset_env_clean(env, shot, seed=0):
         env.gym.apply_rigid_body_force_tensors(env.sim, gymtorch.unwrap_tensor(env.ball_force_tensor))
     env.reset_idx(torch.arange(env.num_envs, device=env.device))
     env.startstep = 49
+    env.compute_observations()
     return env.get_observations()
 
 

@@ -182,3 +182,102 @@ class K1ReachRewardTest(unittest.TestCase):
         e.root_states[:, 2] = .60
         _ = self.successland(e)
         self.assertTrue(bool(e.has_in_air.item()))
+
+    def test_balanced_distribution_anti_kolong_and_safe_limits_config(self):
+        cfg_path = Path(__file__).resolve().parents[1] / 'legged_gym/legged_gym/envs/k1/k1_config.py'
+        cfg_tree = ast.parse(cfg_path.read_text())
+        k1 = next(n for n in cfg_tree.body if isinstance(n, ast.ClassDef) and n.name == 'K1Cfg')
+        ppo = next(n for n in cfg_tree.body if isinstance(n, ast.ClassDef) and n.name == 'K1CfgPPO')
+        sub = lambda cls, name: next(n for n in cls.body if isinstance(n, ast.ClassDef) and n.name == name)
+        def vals(cls):
+            out = {}
+            for n in cls.body:
+                if isinstance(n, ast.Assign):
+                    try:
+                        out[n.targets[0].id] = ast.literal_eval(n.value)
+                    except ValueError:
+                        pass
+            return out
+
+        env_v = vals(sub(k1, 'env'))
+        cmd_v = vals(sub(k1, 'commands'))
+        init_v = vals(sub(k1, 'init_state'))
+        ctrl_v = vals(sub(k1, 'control'))
+        rew_v = vals(sub(k1, 'rewards'))
+        scales_v = vals(sub(sub(k1, 'rewards'), 'scales'))
+        alg_v = vals(sub(ppo, 'algorithm'))
+
+        self.assertEqual(env_v['episode_length_s'], 3.2)
+        self.assertAlmostEqual(cmd_v['train_fast_ratio'], 0.30)
+        self.assertGreaterEqual(cmd_v['train_kolong_ratio'], 0.25)
+        self.assertGreaterEqual(cmd_v['train_high_corner_ratio'], 0.30)
+        self.assertTrue(ctrl_v['limit_joint_targets'])
+        self.assertLessEqual(rew_v['soft_dof_pos_limit'], 0.90)
+        self.assertLessEqual(scales_v['dof_pos_limits'], -4.5)
+        self.assertLess(scales_v['goal_conceded'], scales_v['termination'])  # kebobolan lebih mahal dari jatuh
+        self.assertTrue(ctrl_v['limit_targets_upper_only'])
+        self.assertLessEqual(scales_v['kolong_gap'], -140.0)
+        self.assertEqual(alg_v['schedule'], 'fixed')
+        self.assertLessEqual(alg_v['entropy_coef'], 0.001)
+        dja = init_v['default_joint_angles']
+        self.assertAlmostEqual(dja['left_hip_roll_joint'], 0.04)
+        self.assertAlmostEqual(dja['right_hip_roll_joint'], -0.04)
+        self.assertAlmostEqual(dja['left_ankle_roll_joint'], -0.04)
+        self.assertAlmostEqual(dja['right_ankle_roll_joint'], 0.04)
+        self.assertAlmostEqual(init_v['init_pos'][11], 0.04)
+        self.assertAlmostEqual(init_v['init_pos'][15], -0.04)
+        self.assertAlmostEqual(init_v['init_pos'][17], -0.04)
+        self.assertAlmostEqual(init_v['init_pos'][21], 0.04)
+
+        # Anti-kolong gap threshold: 0.20 m closed stance pays 0 split excess, 0.22 m pays > 0.
+        e = self.env
+        e.contact_feet_indices = [0, 1]
+        e.end_regions[:] = 4
+        e.end_target[:] = torch.tensor([[.08, .08, .14]])
+        e.ball_end = e.end_target.clone()
+        e.ball_states[:, :3] = torch.tensor([[1.0, .08, .14]])
+        e.rigid_body_states[:, 0, 1] = .10
+        e.rigid_body_states[:, 1, 1] = -.10
+        pen_20 = self.kolong_pen(e).item()
+        e.rigid_body_states[:, 0, 1] = .11
+        e.rigid_body_states[:, 1, 1] = -.11
+        pen_22 = self.kolong_pen(e).item()
+        self.assertGreater(pen_22, pen_20)
+
+        # assign_ball_states: 70/30 slow-fast ratio, kolong on low, symmetric high corners on R2/R3.
+        path = Path(__file__).resolve().parents[1] / 'legged_gym/legged_gym/envs/base/legged_robot.py'
+        tree = ast.parse(path.read_text())
+        fn = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == 'assign_ball_states')
+        scope = {'torch': torch}
+        exec(compile(ast.Module(body=[fn], type_ignores=[]), str(path), 'exec'), scope)
+        assign_fn = scope['assign_ball_states']
+        torch.manual_seed(0)
+        n = 6000
+        env = NS(
+            cfg=NS(asset=NS(name="k1"), commands=NS(
+                train_speed_range=[8.5, 14.0], train_fast_ratio=0.30,
+                train_kolong_ratio=0.30, train_high_corner_ratio=0.35,
+            )),
+            num_envs=n, play=False, device='cpu',
+            catchstep=torch.zeros(n, dtype=torch.int),
+            end_regions=torch.arange(n) % 6,
+            command_ranges=torch.tensor([
+                [0.0, 0.75, 0.35, 0.85], [-0.75, 0.0, 0.35, 0.85],
+                [0.05, 0.75, 0.80, 1.15], [-0.75, -0.05, 0.80, 1.15],
+                [0.0, 0.75, 0.11, 0.35], [-0.75, 0.0, 0.11, 0.35],
+            ]).repeat(n // 6, 1),
+            ball_start=torch.zeros(n, 3), ball_end=torch.zeros(n, 3),
+            end_target=torch.zeros(n, 3), env_origins=torch.zeros(n, 3),
+        )
+        vel = assign_fn(env, torch.arange(n))
+        xy_spd = torch.norm(vel[:, :2], dim=-1)
+        fast_frac = (xy_spd >= 8.2).float().mean().item()
+        self.assertGreater(fast_frac, 0.25)
+        self.assertLess(fast_frac, 0.35)
+        r2_y = env.ball_end[env.end_regions == 2, 1]
+        r3_y = env.ball_end[env.end_regions == 3, 1]
+        self.assertGreater((r2_y >= 0.75).float().mean().item(), 0.04)
+        self.assertGreater((r3_y <= -0.75).float().mean().item(), 0.04)
+        low_fast = ((env.end_regions == 4) | (env.end_regions == 5)) & (xy_spd >= 8.2)
+        low_fast_kol = (torch.abs(env.ball_end[low_fast, 1]) <= 0.24) & (env.ball_end[low_fast, 2] <= 0.24)
+        self.assertGreater(low_fast_kol.float().mean().item(), 0.35)

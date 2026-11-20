@@ -108,8 +108,7 @@ def get_load_path(root, load_run=-1, checkpoint=-1, model_name_include="model"):
     """Return path to a checkpoint under the given root.
 
     Behavior:
-    - If root is not a directory, try to resolve it by matching the first 4 chars
-      of a directory name in the parent folder (kept for backward compatibility).
+    - Require `root` to be an existing checkpoint directory (exact match; no prefix guessing).
     - If checkpoint == -1, pick the latest available model file under root.
       Preference order:
         1) Files that contain `model_name_include` if provided
@@ -118,21 +117,6 @@ def get_load_path(root, load_run=-1, checkpoint=-1, model_name_include="model"):
     - If checkpoint >= 0, expect a file named `model_{checkpoint}.pt` unless a full
       filename (ending with .pt/.pth/.onnx) is provided.
     """
-
-    # Resolve root by prefix match if a path-like prefix was provided instead of a dir
-    if not os.path.isdir(root):  # use first 4 chars to match the run name
-        model_name_cand = os.path.basename(root)
-        model_parent = os.path.dirname(root)
-        if os.path.isdir(model_parent):
-            model_names = [
-                name for name in os.listdir(model_parent)
-                if os.path.isdir(os.path.join(model_parent, name))
-            ]
-            prefix = model_name_cand[:4]
-            for name in model_names:
-                if name.startswith(prefix):
-                    root = os.path.join(model_parent, name)
-                    break
 
     if not os.path.isdir(root):
         raise FileNotFoundError(f"Checkpoint root directory not found or invalid: {root}")
@@ -234,6 +218,8 @@ def get_args(extra_parameters=None):
         {"name": "--distance", "type": float, "default": None, "help": "Alias for --start_x (launch distance X in meters)"},
         {"name": "--jarak", "type": float, "default": None, "help": "Alias Bahasa Indonesia untuk --start_x (jarak tendangan X dalam meter)"},
         {"name": "--start_y", "type": float, "default": None, "help": "Custom ball start lateral offset (Y in meters, e.g. 0.0)"},
+        {"name": "--walk_ckpt", "type": str, "default": None, "help": "Path to Policy 2 (k1_walk) checkpoint .pt for 2-policy post-shot walk-back"},
+        {"name": "--legacy", "action": "store_true", "default": False, "help": "K1 only: replay older checkpoints (<= landfix_5350 / walk_v4) with their original stance (hip/ankle roll +-0.10) and no target clamp"},
     ]
     # parse arguments
     args = gymutil.parse_arguments(

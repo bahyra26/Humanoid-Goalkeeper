@@ -44,3 +44,15 @@ class TargetGuardTests(unittest.TestCase):
         env.catchstep[:] = env.startstep
         scope['_compute_torques'](env, action)
         torch.testing.assert_close(env.joint_pos_target, torch.tensor([[1., -.5]]))
+        # When hard_dof_pos_limits is present, clamp targets to hard limits (preserving soft-margin headroom).
+        env.hard_dof_pos_limits = torch.tensor([[-1.2, 1.2], [-.6, .6]])
+        scope['_compute_torques'](env, action)
+        torch.testing.assert_close(env.joint_pos_target, torch.tensor([[1.2, -.6]]))
+        # Upper-only: joint 0 (upper body) clamps to hard limit, joint 1 (leg) stays free.
+        env.cfg.asset.name = "k1"
+        env.cfg.amp.amp_coef = 0
+        env.catchstep[:] = env.startstep - 1
+        env.cfg.control.limit_targets_upper_only = True
+        env.upper_body_joint_indices = torch.tensor([0])
+        scope['_compute_torques'](env, action)
+        torch.testing.assert_close(env.joint_pos_target, torch.tensor([[1.2, -3.]]))

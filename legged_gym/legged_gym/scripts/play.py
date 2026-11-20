@@ -51,15 +51,34 @@ def play(args):
     
     
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
+    if getattr(args, 'legacy', False):
+        if args.task != 'k1':
+            raise ValueError('--legacy is supported only for --task k1')
+        # Original stance (hip/ankle roll +-0.10) and no target clamp, as older checkpoints were trained.
+        env_cfg.control.limit_joint_targets = False
+        init = env_cfg.init_state
+        for name, v in (('left_hip_roll_joint', 0.10), ('left_ankle_roll_joint', -0.10),
+                        ('right_hip_roll_joint', -0.10), ('right_ankle_roll_joint', 0.10)):
+            init.default_joint_angles[name] = v
+        init.init_pos = list(init.init_pos)
+        init.init_pos[11], init.init_pos[15], init.init_pos[17], init.init_pos[21] = 0.10, -0.10, -0.10, 0.10
+        print('[LEGACY] stance hip/ankle roll +-0.10, limit_joint_targets=False')
     env_cfg.env.num_envs = 6 if getattr(args, 'num_envs', None) is None else args.num_envs
     env_cfg.sim.physx.max_gpu_contact_pairs = 2**17
     env_cfg.sim.physx.default_buffer_size_multiplier = 1
-    env_cfg.env.episode_length_s = 3.0 if args.task == 'k1' else 8
+    env_cfg.env.episode_length_s = 12.0 if (args.task == 'k1' and getattr(args, 'walk_ckpt', None)) else 8.0
     env_cfg.env.play = True
     env_cfg.noise.add_noise = False
     if getattr(args, 'seed', None) is None:
         env_cfg.seed = int(time() * 1000) % 100000
 
+    if args.task != 'k1':
+        k1_only_flags = [
+            f"--{name}" for name in ('target_y', 'target_z', 'ball_speed', 'flight_time', 'start_x', 'start_y')
+            if getattr(args, name, None) is not None
+        ]
+        if k1_only_flags:
+            raise ValueError(f"{', '.join(k1_only_flags)} supported only for --task k1")
     if getattr(args, 'region', None) is not None:
         env_cfg.commands.custom_region = args.region
         print(f"[CUSTOM BALL TARGET] Target wilayah gawang dipaksa ke Region {args.region}")
@@ -134,6 +153,27 @@ def play(args):
     policy = ppo_runner.get_inference_policy(device=env.device)
     all_env_ids = torch.arange(env.num_envs, device=env.device)
 
+    walk_policy = None
+    two_policy_ctrl = None
+    if args.task == 'k1' and getattr(args, 'walk_ckpt', None):
+        from legged_gym.utils.k1_two_policy import (
+            K1TwoPolicyController,
+            STATE_GOALKEEPER,
+            STATE_READY_HOME,
+            STATE_WALK_BACK,
+            load_walk_policy,
+        )
+        walk_policy, walk_meta = load_walk_policy(args.walk_ckpt, device=env.device)
+        two_policy_ctrl = K1TwoPolicyController(
+            num_envs=env.num_envs,
+            num_actions=env.num_actions,
+            dt=env.dt,
+            device=env.device,
+            walk_history_len=walk_meta['history_len'],
+            walk_one_step_dim=walk_meta['one_step_dim'],
+        )
+        print(f"[2-POLICY] Policy 2 walk-back aktif: {args.walk_ckpt}")
+
     def safe_reset_all():
         try:
             env.reset_idx(all_env_ids)
@@ -153,7 +193,7 @@ def play(args):
     env.compute_observations()
     obs = env.get_observations()
 
-    if EXPORT_POLICY:
+    if EXPORT_POLICY and hasattr(ppo_runner.alg.actor_critic, 'ball_estimator'):
         policy_name = 'goalkeeper'
         path = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'policies')
         export_policy_as_jit(ppo_runner.alg.actor_critic, path, policy_name)
@@ -182,6 +222,8 @@ def play(args):
         nonlocal obs, shot_outcome_printed
         shot_outcome_printed = False
         safe_reset_all()
+        if two_policy_ctrl is not None:
+            two_policy_ctrl.reset()
         env.compute_observations()
         obs = env.get_observations()
         x0_now = float(env.ball_start[0, 0] - env.env_origins[0, 0])
@@ -193,6 +235,9 @@ def play(args):
         print(f"⚽ [TEMBAK] {status_msg} | Jarak X={x0_now:.2f}m (Y0={y0_now:+.2f}m) -> Sasaran (Y={y_now:+.2f}m, Z={z_now:.2f}m) | Speed={spd_now:.1f}m/s (Vx={vx_now:.1f}m/s)")
 
     def handle_action(act):
+        if args.task != 'k1' and act != "shoot_now":
+            print("[INFO] Kontrol target/kecepatan/jarak kustom hanya didukung untuk --task k1.")
+            return
         cmds = env.cfg.commands
         if act.startswith("region_") and act != "region_random":
             r = int(act.split("_")[1])
@@ -274,6 +319,9 @@ def play(args):
             handle_action("region_random")
             return
         parts = low.replace(",", " ").replace("=", " ").split()
+        if args.task != 'k1':
+            print("[INFO] Kontrol target/kecepatan/jarak kustom hanya didukung untuk --task k1; tekan Enter untuk tembak ulang atau `q` untuk keluar.")
+            return
         cmds = env.cfg.commands
         try:
             if len(parts) == 1 and int(parts[0]) in range(6):
@@ -328,14 +376,35 @@ def play(args):
         print("[INFO] Perintah terminal: `0`-`5` (region), `v 12` (kecepatan 12 m/s), `x 4.5` (jarak 4.5 m), `vx 12 4.5` (kecepatan & jarak), `Y Z [V] [X]` (misal `-0.5 0.8 12 4.5`), `acak`, `reset`, atau Enter.")
 
     step_idx = 0
+    prev_ctrl_state0 = 0
     max_steps = 3000 if args.headless else 10**9
     while step_idx < max_steps:
         while env.viewer_action_events:
             handle_action(env.viewer_action_events.pop(0))
         poll_terminal_input()
 
-        actions = policy(obs.detach())
+        if two_policy_ctrl is not None:
+            actions = two_policy_ctrl.step_action(env, obs, policy, walk_policy)
+            cur_state0 = int(two_policy_ctrl.state[0].item())
+            if cur_state0 != prev_ctrl_state0:
+                rx0 = float(env.root_states[0, 0] - env.env_origins[0, 0])
+                ry0 = float(env.root_states[0, 1] - env.env_origins[0, 1])
+                if cur_state0 == STATE_WALK_BACK:
+                    print(f"🚶 [WALK-BACK] Bola 100% aman -> jalan pulang dari (X={rx0:+.2f}m, Y={ry0:+.2f}m) ke (0, 0)")
+                elif cur_state0 == STATE_READY_HOME:
+                    print(f"🏠 [HOME] Tiba di depan gawang (X={rx0:+.2f}m, Y={ry0:+.2f}m), stance siap")
+                elif cur_state0 == STATE_GOALKEEPER and prev_ctrl_state0 != STATE_GOALKEEPER:
+                    print("🧤 [GOALKEEPER] Bola datang -> Policy 1 aktif")
+                prev_ctrl_state0 = cur_state0
+        else:
+            actions = policy(obs.detach())
         obs, privileged_obs, rews, dones, infos, _, _ = env.step(actions.detach())
+        if two_policy_ctrl is not None:
+            done_ids = dones.nonzero(as_tuple=False).flatten()
+            if len(done_ids) > 0:
+                two_policy_ctrl.reset(done_ids)
+                if bool(dones[0]):
+                    prev_ctrl_state0 = 0
         if args.task == 'k1' and not shot_outcome_printed:
             bx0 = float(env.ball_states[0, 0] - env.env_origins[0, 0])
             by0 = float(env.ball_states[0, 1] - env.env_origins[0, 1])
@@ -360,5 +429,6 @@ if __name__ == '__main__':
     args = get_args()
     if args.exptid is None:
         args.exptid = 'goalkeeper'
-    args.headless = False
+    if '--headless' not in sys.argv:
+        args.headless = False
     play(args)

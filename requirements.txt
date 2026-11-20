@@ -8,3 +8,4 @@ opencv-python
 numpy<1.24
 onnx
 onnxruntime
+gitpython

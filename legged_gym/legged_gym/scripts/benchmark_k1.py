@@ -96,6 +96,7 @@ def _settle_reset(env, seed=None, custom_shots=None):
             env.ball_vel[i] = vel[0]
         all_states = torch.cat((env.root_states.unsqueeze(1), env.ball_states.unsqueeze(1)), dim=1).view(-1, 13)
         env.gym.set_actor_root_state_tensor(env.sim, gymtorch.unwrap_tensor(all_states))
+    env.compute_observations()
     init_ball = torch.cat([env.ball_states[:, :3] - env.env_origins, env.ball_states[:, 7:10]], dim=-1).clone()
     return env.get_observations(), init_ball
 
@@ -120,7 +121,12 @@ def _run_batch(env, policy, n_active, seed=None, custom_shots=None, steps=150, n
     term_spd = torch.zeros(num_envs, device=env.device)
     end_2ft = torch.zeros(num_envs, dtype=torch.bool, device=env.device)
     prev_a = torch.zeros(num_envs, env.num_actions, device=env.device)
-    daL, daP, lim_v = [], [], []
+    daL_sum = torch.zeros(n_active, device=env.device)
+    daL_cnt = torch.zeros(n_active, device=env.device)
+    daP_sum = torch.zeros(n_active, device=env.device)
+    daP_cnt = torch.zeros(n_active, device=env.device)
+    lim_sum = torch.zeros(n_active, device=env.device)
+    lim_cnt = torch.zeros(n_active, device=env.device)
     max_steps = torch.full((num_envs,), steps, dtype=torch.long, device=env.device)
 
     cross_goal_yz = torch.full((num_envs, 2), float('nan'), device=env.device)
@@ -155,11 +161,23 @@ def _run_batch(env, policy, n_active, seed=None, custom_shots=None, steps=150, n
                 ever_gl[u_ids] |= sr['goal'][mask_new]
                 ever_ct[u_ids] |= prev_ct[u_ids] | sr['save'][mask_new]
                 ever_fl[u_ids] |= sr['fall'][mask_new]
-                term_x[u_ids] = prev_ball[u_ids, 0]
-                term_y[u_ids] = prev_ball[u_ids, 1]
-                term_vx[u_ids] = prev_vel[u_ids, 0]
-                term_spd[u_ids] = torch.norm(prev_vel[u_ids], dim=-1)
-                max_steps[u_ids] = s
+                if 'final_ball_x_m' in sr:
+                    term_x[u_ids] = sr['final_ball_x_m'][mask_new]
+                    term_y[u_ids] = sr['final_ball_y_m'][mask_new]
+                    term_vx[u_ids] = sr['final_ball_vx_m_s'][mask_new]
+                    term_spd[u_ids] = sr['final_ball_speed_m_s'][mask_new]
+                    traj[s, u_ids, 0] = sr['final_ball_x_m'][mask_new]
+                    traj[s, u_ids, 1] = sr['final_ball_y_m'][mask_new]
+                    traj[s, u_ids, 2] = sr['final_ball_z_m'][mask_new]
+                    max_steps[u_ids] = s + 1
+                else:
+                    term_x[u_ids] = prev_ball[u_ids, 0]
+                    term_y[u_ids] = prev_ball[u_ids, 1]
+                    term_vx[u_ids] = prev_vel[u_ids, 0]
+                    term_spd[u_ids] = torch.norm(prev_vel[u_ids], dim=-1)
+                    max_steps[u_ids] = s
+                if 'both_feet_support' in sr:
+                    end_2ft[u_ids] = sr['both_feet_support'][mask_new]
                 done_mask[u_ids] = True
 
         # Wait: reset_idx already ran for `dones` inside step(), so check live envs (`~done_mask`) directly.
@@ -178,15 +196,17 @@ def _run_batch(env, policy, n_active, seed=None, custom_shots=None, steps=150, n
                 tilt = torch.norm(env.projected_gravity[:, :2], dim=-1) > 0.8
                 lowk = torch.min(env.rigid_body_states[:, env.knee_indices, 2], dim=-1).values < 0.08
                 ever_fl[still] |= (tilt | lowk)[still]
-                over = (env.dof_pos[still] < env.dof_pos_limits[:, 0]) | (env.dof_pos[still] > env.dof_pos_limits[:, 1])
-                lim_v.append(float(over.float().mean()))
-                da = torch.abs(env.actions - prev_a).mean(dim=-1)
-                live = (bx > -0.02) & (~env._k1_ball_safe()) & (env.goal_conceded_flag == 0) & still
-                safe = env._k1_ball_safe(include_behind=True) & still
-                if live.any():
-                    daL.append(float(da[live].mean()))
-                if safe.any():
-                    daP.append(float(da[safe].mean()))
+                still_act = still[:n_active]
+                over = ((env.dof_pos[:n_active] < env.dof_pos_limits[:, 0]) | (env.dof_pos[:n_active] > env.dof_pos_limits[:, 1])).float().mean(dim=-1)
+                lim_sum[still_act] += over[still_act]
+                lim_cnt[still_act] += 1.0
+                da = torch.abs(env.actions[:n_active] - prev_a[:n_active]).mean(dim=-1)
+                live = (bx[:n_active] > -0.02) & (~env._k1_ball_safe()[:n_active]) & (env.goal_conceded_flag[:n_active] == 0) & still_act
+                safe = env._k1_ball_safe(include_behind=True)[:n_active] & still_act
+                daL_sum[live] += da[live]
+                daL_cnt[live] += 1.0
+                daP_sum[safe] += da[safe]
+                daP_cnt[safe] += 1.0
             prev_a = env.actions.clone()
 
             live_all = (bx > -0.02) & (~env._k1_ball_safe()) & (env.goal_conceded_flag == 0) & still
@@ -242,8 +262,9 @@ def _run_batch(env, policy, n_active, seed=None, custom_shots=None, steps=150, n
     if nk_traj is not None:
         for i in range(n_active):
             ms = int(max_steps[i].item())
-            diff = torch.norm(traj[:ms, i] - nk_traj[:ms, i], dim=-1).max()
-            diverged[i] = diff > 0.005
+            if ms > 0:
+                diff = torch.norm(traj[:ms, i] - nk_traj[:ms, i], dim=-1).max()
+                diverged[i] = diff > 0.005
 
     touched = diverged if nk_traj is not None else ever_ct
     ws = nk_goals if nk_goals is not None else None
@@ -258,8 +279,12 @@ def _run_batch(env, policy, n_active, seed=None, custom_shots=None, steps=150, n
         'blocked_save': blk, 'goal': gl_m, 'out_no_touch': out_m, 'off_target_touched': off_t,
         'unresolved': unr, 'fall': ever_fl[:n_active], 'end_2ft': end_2ft[:n_active],
         'ov2': ever_ov2[:n_active], 'cross_goal_yz': cross_goal_yz[:n_active],
-        'daL': sum(daL) / max(len(daL), 1), 'daP': sum(daP) / max(len(daP), 1),
-        'lim_pct': 100.0 * sum(lim_v) / max(len(lim_v), 1),
+        'daL_sum': daL_sum, 'daL_cnt': daL_cnt,
+        'daP_sum': daP_sum, 'daP_cnt': daP_cnt,
+        'lim_sum': lim_sum, 'lim_cnt': lim_cnt,
+        'daL': float(daL_sum.sum() / torch.clamp(daL_cnt.sum(), min=1.0)),
+        'daP': float(daP_sum.sum() / torch.clamp(daP_cnt.sum(), min=1.0)),
+        'lim_pct': float(100.0 * lim_sum.sum() / torch.clamp(lim_cnt.sum(), min=1.0)),
         'kol_cross_info': kol_cross_info, 'high_trace': high_trace,
     }
 
@@ -277,6 +302,12 @@ def _summarize_slice(res, idx_slice, nk_goals_slice, regions=None):
     n_on = int(on_t.sum())
     n_blk_on = int((blk & on_t).sum())
     n_sv = int(blk.sum())
+    if 'daL_sum' in res:
+        daL_val = float(res['daL_sum'][idx_slice].sum() / torch.clamp(res['daL_cnt'][idx_slice].sum(), min=1.0))
+        daP_val = float(res['daP_sum'][idx_slice].sum() / torch.clamp(res['daP_cnt'][idx_slice].sum(), min=1.0))
+        lim_val = float(100.0 * res['lim_sum'][idx_slice].sum() / torch.clamp(res['lim_cnt'][idx_slice].sum(), min=1.0))
+    else:
+        daL_val, daP_val, lim_val = res['daL'], res['daP'], res['lim_pct']
     summary = {
         'total': int(blk.numel()),
         'on_target_shots': n_on,
@@ -291,9 +322,9 @@ def _summarize_slice(res, idx_slice, nk_goals_slice, regions=None):
         '2ft_pct_on_blocked': round(100.0 * int((f2 & blk).sum()) / max(n_sv, 1), 1),
         'ov2_sv_pct': round(100.0 * int((ov2 & blk).sum()) / max(n_sv, 1), 1),
         'ov2_fail_pct': round(100.0 * int((ov2 & gl).sum()) / max(int(gl.sum()), 1), 1),
-        'daL': round(res['daL'], 4),
-        'daP': round(res['daP'], 4),
-        'lim_pct': round(res['lim_pct'], 2),
+        'daL': round(daL_val, 4),
+        'daP': round(daP_val, 4),
+        'lim_pct': round(lim_val, 2),
     }
     if regions is not None:
         reg_s = {}
@@ -338,6 +369,8 @@ def main():
     n1, n2, n3 = len(s1), len(s1) + len(kol), len(s1) + len(kol) + len(mot)
 
     print(f'=== RUNNING NO-KEEPER BASELINE ({n_det} det + {len(cli.seeds)}x1440 random) ===', flush=True)
+    env.cfg.commands.custom_ball_speed = None
+    env.cfg.commands.custom_start_x = None
     nk_det = _run_batch(env, None, n_det, seed=0, custom_shots=det_shots, steps=150)
     nk_rand = {}
     for seed in cli.seeds:
@@ -377,6 +410,8 @@ def main():
         ppo.load(path)
         pol = ppo.get_inference_policy(device=env.device)
         print(f'\n=== MODEL {tag} ===', flush=True)
+        env.cfg.commands.custom_ball_speed = None
+        env.cfg.commands.custom_start_x = None
         k_det = _run_batch(env, pol, n_det, seed=0, custom_shots=det_shots, steps=150,
                            nk_traj=nk_det['traj'], nk_goals=nk_det['ever_gl'], expected_init=nk_det['init_ball'])
         det_summary = {}
