@@ -26,29 +26,31 @@ Four verified standing saves from the final 2-policy release (`v11_6000 + walk_v
 
 ## Results
 
-**The final demo uses the 2-policy pair `v11_6000 + walk_v5_2700`.** Across all three evaluation seeds (`1, 777, 2026`), `v11_6000` saved **896 of 1,080 standard shots (`82.96%`, only `7` falls)** and **2,206 of 4,312 on-target attempts (`51.16%`, `+130` saves over Run G `landfix_5350`)** spanning standard through `14 m/s` shots. It enforces `0.0%` upper-body PD target overshoot beyond URDF hard stops (`limit_targets_upper_only = True`), closes the standing five-hole (*kolong*) inner foot gap from `18.7 cm` to `14.6 cm` (`< 15.0 cm` Size 1 ball), and hands off after ball clearance to Policy 2 (`k1_walk_v5/model_2700.pt`) to walk back calmly to goal center. The simulated goal measured `2.60 × 1.20 m`, and the Size 1 ball weighed `200 g` (`15 cm` diameter). [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Final 3-seed results](evaluation/k1_v11_v13_allseeds_benchmark.json) · [Run G results](evaluation/k1_g_allseeds_benchmark.json) · [Checkpoint manifest](evaluation/FINAL_CHECKPOINTS.json)
+**The final demo uses the 2-policy pair `v11_6000 + walk_v5_2700`.** Evaluated under the **`70/30` training-matched shot mix** (`70%` standard `~5.5–9.0 m/s` + `30%` fast `10–14 m/s`, matching `train_fast_ratio = 0.30` across seeds `1, 777, 2026`), `v11_6000` achieves a **`70.23%` weighted save rate** (`82.96%` on `1,080` standard shots with only `7` falls, and `40.53%` across `3,232` fast `10–14 m/s` shots; `+2.37` pp over Run G `landfix_5350` at `67.86%`). On the unweighted equal-band stress test (`25%` standard / `75%` fast `10–14 m/s`, `4,312` on-target shots), it saves **2,206 / 4,312 (`51.16%`, `+130` saves over Run G)**. It enforces `0.0%` upper-body PD target overshoot beyond URDF hard stops (`limit_targets_upper_only = True`), closes the standing five-hole (*kolong*) inner foot gap from `18.7 cm` to `14.6 cm` (`< 15.0 cm` Size 1 ball), and hands off after ball clearance to Policy 2 (`k1_walk_v5/model_2700.pt`) to walk back calmly to goal center. The simulated goal measured `2.60 × 1.20 m`, and the Size 1 ball weighed `200 g` (`15 cm` diameter). [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Final 3-seed results](evaluation/k1_v11_v13_allseeds_benchmark.json) · [Run G results](evaluation/k1_g_allseeds_benchmark.json) · [Checkpoint manifest](evaluation/FINAL_CHECKPOINTS.json)
 
-| Checkpoint | Random saves / 4,312 on target | Upper-corner saves / 1,432 | `STD` falls / 1,080 | Fixed-shot saves / 69 |
-|---|---:|---:|---:|---:|
-| `v9_5000` (baseline) | 1,931 (44.78%) | 414 (28.91%) | 7 | 28 |
-| `nocollide_5200` (Run F) | 2,008 (46.57%) | 522 (36.45%) | 30 | 40 |
-| `landfix_5350` (Run G, `--legacy`) | 2,076 (48.14%) | 568 (39.66%) | 10 | **47** |
-| `gema25_5400` (Run I, EMA ablation) | 2,079 (48.21%) | 532 (37.15%) | 7 | 46 |
-| **`v11_6000` (Final balanced, default demo)** | **2,206 (51.16%)** | 524 (36.59%) | **7** | 39 |
-| `v13_5800` (Agile high-corner specialist) | 1,938 (44.94%) | **573 (40.01%)** | 62 | 44 |
+| Checkpoint | `70/30` save rate (`70%` STD / `30%` Fast) | `STD` (`~5.5–9 m/s`) | Fast (`10–14 m/s`) | Stress `25/25/25/25` (/ 4,312) | Upper corners (/ 1,432) | `STD` falls (/ 1,080) | Fixed (/ 69) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `v9_5000` (baseline) | 64.02% | 76.85% | 34.07% | 1,931 (44.78%) | 414 (28.91%) | 7 | 28 |
+| `nocollide_5200` (Run F) | 66.56% | 79.91% | 35.43% | 2,008 (46.57%) | 522 (36.45%) | 30 | 40 |
+| `landfix_5350` (Run G, `--legacy`) | 67.86% | 81.02% | 37.16% | 2,076 (48.14%) | 568 (39.66%) | 10 | **47** |
+| `gema25_5400` (Run I, EMA ablation) | 68.44% | 81.94% | 36.94% | 2,079 (48.21%) | 532 (37.15%) | 7 | 46 |
+| **`v11_6000` (Final balanced, default demo)** | **70.23%** | **82.96%** | **40.53%** | **2,206 (51.16%)** | 524 (36.59%) | **7** | 39 |
+| `v13_5800` (Agile high-corner specialist) | 64.03% | 76.76% | 34.31% | 1,938 (44.94%) | **573 (40.01%)** | 62 | 44 |
 
 Per-speed breakdown for the final policy **`v11_6000`** vs legacy **`landfix_5350`** across all three evaluation seeds (`1, 777, 2026`):
 
-| Speed range | Launch distance | `v11_6000` saves | `v11_6000` rate | `landfix_5350` rate | Gain (`v11` vs Run G) |
+| Speed tier | Launch distance | `v11_6000` saves | `v11_6000` rate | `landfix_5350` rate | Gain (`v11` vs Run G) |
 |---|---|---:|---:|---:|---:|
+| **`70/30` weighted overall (`70%` STD + `30%` Fast)** | `3.0–6.0 m` | weighted | **70.23%** | 67.86% | **`+2.37 pp`** |
 | Standard (`~5.5–9.0 m/s`) | `3.0–4.4 m` | **896 / 1,080** | **82.96%** | 81.02% | `+21` (`+1.94%`) |
+| Fast combined (`10–14 m/s`) | `3.0–6.0 m` | **1,310 / 3,232** | **40.53%** | 37.16% | `+109` (`+3.37%`) |
 | Fast (`10 m/s`) | `3.0–4.4 m` | **421 / 1,072** | **39.27%** | 36.94% | `+25` (`+2.33%`) |
 | Fast (`12 m/s`) | `5.0 m` | **460 / 1,080** | **42.59%** | 40.83% | `+19` (`+1.76%`) |
 | Fast (`14 m/s`) | `6.0 m` | **429 / 1,080** | **39.72%** | 33.70% | `+65` (`+6.02%`) |
 
-![Save rate versus shot speed across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_speed.png)
+![Save rate overview under 70/30 training mix and speed bands across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_speed.png)
 
-![Save rate versus target position R0 to R5 across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_region.png)
+![Save rate versus target position R0 to R5 weighted 70/30 across evaluation seeds 1, 777, and 2026](docs/k1_final_save_by_region.png)
 
 The earlier Run G vs Run I comparison (`landfix_5350` vs `gema25_5400`, difference `+0.07` percentage points, paired 95% CI `−1.15` to `+1.29`) established `landfix_5350` as the parent checkpoint for the balanced and agile fine-tuning stages below. [Run I results](evaluation/k1_i_allseeds_benchmark.json) · [Paired comparisons](evaluation/k1_i_paired_ci.json)
 
@@ -71,7 +73,8 @@ Head-to-head comparison across all three evaluation seeds (`1, 777, 2026`: `4,31
 | Fast `10 m/s` saves / `1,072` (`3` seeds) | `396` (`36.94%`) | **`421` (`39.27%`)** | `419` (`39.09%`) |
 | Fast `12 m/s @ 5 m` saves / `1,080` (`3` seeds) | `441` (`40.83%`) | **`460` (`42.59%`)** | `381` (`35.28%`) |
 | Fast `14 m/s @ 6 m` saves / `1,080` (`3` seeds) | `364` (`33.70%`) | **`429` (`39.72%`)** | `309` (`28.61%`) |
-| Total random saves / `4,312` (`3` seeds) | `2,076` (`48.14%`) | **`2,206` (`51.16%`, `+130` saves)** | `1,938` (`44.94%`) |
+| **`70/30` weighted save rate (`70%` STD + `30%` Fast)** | `67.86%` | **`70.23%` (`+2.37` pp)** | `64.03%` |
+| Total stress saves / `4,312` (`25/25/25/25`) | `2,076` (`48.14%`) | **`2,206` (`51.16%`, `+130` saves)** | `1,938` (`44.94%`) |
 | Upper-corner (`R2+R3`) saves / `1,432` (`3` seeds) | `568` (`39.66%`) | `524` (`36.59%`) | **`573` (`40.01%`)** |
 | Fixed-shot saves (`S1` / `KOL` / `MOT` / `HI`) | **`18/18`** · **`9/12`** · `7/9` · **`13/30`** (`47/69`) | `16/18` · `6/12` · **`9/9`** · `8/30` (`39/69`) | `16/18` · `8/12` · **`9/9`** · `11/30` (`44/69`) |
 | Upper-body PD target `> hard` URDF | up to `33.1%` | **`0.0%`** | **`0.0%`** |
@@ -79,7 +82,7 @@ Head-to-head comparison across all three evaluation seeds (`1, 777, 2026`: `4,31
 | 2-policy E2E falls (`STD` / `12 m/s`, `12 s`) | **`0/120`** / `3/120` (`p2 = 0`) | `2/120` / `8/120` (`p2 = 2 / 2`) | **`0/120`** / **`1/120`** (`p2 = 0 / 1`) |
 | 2-policy E2E `HOME` (`240` shots) & jitter `\|da\|` | `234/240` · `0.0013–0.0014` | `230/240` · `0.0012` | **`238/240`** · **`0.0011`** |
 
-`v11_6000 + walk_v5_2700` is the recommended general-purpose pair: across `4,312` on-target shots (`seeds 1, 777, 2026`), it stops `2,206` shots (`51.16%`, `+130` saves over `landfix_5350`), wins at every speed band (`82.96%` `STD` with only `7 / 1,080` falls, `39.27%` at `10 m/s`, `42.59%` at `12 m/s`, `39.72%` at `14 m/s`), guarantees `0.0%` upper-body target overshoot, and maintains an anti-kolong `14.6 cm` standing gap. `v13_5800 + walk_v5_2700` is the specialist for aggressive upper-corner leaps (`573 / 1,432 = 40.01%` upper-corner saves, `11/30` on `HIGH_GRID_30`, and `238/240` `HOME` with `1` Policy 2 fall in 2-policy E2E) at a lower overall save rate (`44.94%`).
+`v11_6000 + walk_v5_2700` is the recommended general-purpose pair: across `4,312` on-target shots (`seeds 1, 777, 2026`), it achieves **`70.23%`** under the `70/30` training-matched mix (`51.16%` = `2,206 / 4,312` on the 4-band stress test, `+130` saves over `landfix_5350`), wins at every speed band (`82.96%` `STD` with only `7 / 1,080` falls, `39.27%` at `10 m/s`, `42.59%` at `12 m/s`, `39.72%` at `14 m/s`), guarantees `0.0%` upper-body target overshoot, and maintains an anti-kolong `14.6 cm` standing gap. `v13_5800 + walk_v5_2700` is the specialist for aggressive upper-corner leaps (`573 / 1,432 = 40.01%` upper-corner saves, `11/30` on `HIGH_GRID_30`, and `238/240` `HOME` with `1` Policy 2 fall in 2-policy E2E) at a lower overall save rate (`64.03%` `70/30`, `44.94%` stress).
 
 A re-polish of Policy 2 under the final guard (`k1_walk_v6`, `300` iterations from `walk_v5_2700`, [verification](evaluation/k1_walk_v6_e2e.json)) lowered standing jitter (`|da| 0.0007–0.0008` vs `0.0011–0.0012`) while keeping `1–7` Policy 2 falls (`227–235/240` `HOME`), within simulation noise of `walk_v5_2700` (`1–4` Policy 2 falls, `230–238/240` `HOME`), so `walk_v5_2700` remains the recommended Policy 2.
 
