@@ -1,6 +1,6 @@
 # Humanoid Goalkeeper for Booster K1
 
-[Internship report](#internship-report) · [Simulation gallery](#simulation-gallery) · [References](#references) · [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [Original paper](https://arxiv.org/abs/2510.18002) · [ICHIRO ITS](https://ichiro-its.org/)
+[Internship report](#internship-report) · [Simulation gallery](#simulation-gallery) · [References](#references) · [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [Original paper](https://arxiv.org/abs/2510.18002) · [ICHIRO ITS](https://www.instagram.com/ichiro.its/?hl=en)
 
 I prepared this adaptation for a research internship with ICHIRO, the humanoid robot soccer team at Institut Teknologi Sepuluh Nopember (ITS). The question behind the experiments was simple: how often can a simulated Booster K1 stop a shot and still finish on its feet?
 
@@ -121,6 +121,25 @@ Head-to-head comparison across all three evaluation seeds (`1, 777, 2026`: `4,31
 
 A re-polish of Policy 2 under the final guard (`k1_walk_v6`, `300` iterations from `walk_v5_2700`, [verification](evaluation/k1_walk_v6_e2e.json)) lowered standing jitter (`|da| 0.0007–0.0008` vs `0.0011–0.0012`) while keeping `1–7` Policy 2 falls (`227–235/240` `HOME`), within simulation noise of `walk_v5_2700` (`1–4` Policy 2 falls, `230–238/240` `HOME`), so `walk_v5_2700` remains the recommended Policy 2.
 
+## Motion retargeting (`G1` to `K1` via PyRoki)
+
+To map the six `30 fps` Unitree `G1` goalkeeper reference clips (`lefthand`, `righthand`, `leftjump`, `rightjump`, `leftstep`, `rightstep`) onto the Booster `K1`, [retarget_k1_pyroki.py](legged_gym/legged_gym/scripts/retarget_k1_pyroki.py) runs offline with [PyRoki](https://pyroki-toolkit.github.io/) forward kinematics and bounded `scipy.optimize.least_squares` trajectory IK across all `20` non-head actuated joints (`8` arm + `12` leg). Pelvis-frame limb bone directions are scaled to `K1` segment lengths, foot axes are matched, joint steps stay within [K1 URDF](legged_gym/resources/robots/k1/urdf/k1.urdf) position and velocity limits, and [k1_self_collision.py](legged_gym/legged_gym/scripts/k1_self_collision.py) adjusts `shoulder_roll` in PyBullet (`120 Hz` linear interpolation, head pitch `0.15 rad`) to eliminate self-penetration. [Retargeted 20-DOF dataset](legged_gym/resources/datasets/g1_to_k1_retargeted/) · [Retarget report](legged_gym/resources/datasets/g1_to_k1_retargeted/retarget_report.json) · [Joint index map](legged_gym/resources/datasets/g1_to_k1_retargeted/joint_id.txt)
+
+| Clip | Frames (`30 fps`) | Mean error | Max error | `120 Hz` checks | Penetrating samples | URDF position & velocity bounds |
+|---|---:|---:|---:|---:|---:|:---:|
+| `lefthand` | `123` (`4.10 s`) | `1.41 cm` (`0.0141 m`) | `5.63 cm` (`0.0563 m`) | `489` | `0` | Pass |
+| `righthand` | `246` (`8.20 s`) | `1.01 cm` (`0.0101 m`) | `8.09 cm` (`0.0809 m`) | `981` | `0` | Pass |
+| `leftjump` | `254` (`8.47 s`) | `1.34 cm` (`0.0134 m`) | `11.67 cm` (`0.1167 m`) | `1,013` | `0` | Pass |
+| `rightjump` | `200` (`6.67 s`) | `1.48 cm` (`0.0148 m`) | `10.58 cm` (`0.1058 m`) | `797` | `0` | Pass |
+| `leftstep` | `194` (`6.47 s`) | `1.21 cm` (`0.0121 m`) | `2.79 cm` (`0.0279 m`) | `773` | `0` | Pass |
+| `rightstep` | `197` (`6.57 s`) | `1.00 cm` (`0.0100 m`) | `2.02 cm` (`0.0202 m`) | `785` | `0` | Pass |
+
+How to read and use these results:
+
+- **Limb tracking (`mean_error_m`, `max_error_m`):** error is the Euclidean distance from `K1` elbow, hand, knee, and ankle links to the scaled `G1` targets relative to the shoulder or hip. Mean error stays at `1.00–1.48 cm` across all six clips; peak error rises on extreme dive/reach frames (`leftjump` `11.67 cm`, `rightjump` `10.58 cm`, `righthand` `8.09 cm`) where URDF limits and arm-clearance offsets constrain reach, while stepping clips (`leftstep` `2.79 cm`, `rightstep` `2.02 cm`) stay tight throughout.
+- **Self-collision & URDF bounds:** all `4,838` interpolated checks across the six clips report `penetrating_samples = 0` (`direct-parent` pairs excluded), all `.pt` trajectories pass URDF position and velocity bounds, and `MotionLib` 20-DOF loading passes in [test_k1_arm_amp.py](tests/test_k1_arm_amp.py) (`test_pyroki_urdf_clearance_at_240_hz` requires PyBullet offline). Because retargeting is kinematic in the pelvis frame, `0` penetration does not verify whole-body CoM balance on ground contact.
+- **Current training status (`amp_coef = 0.0`):** `v11_6000 + walk_v5_2700` runs with AMP disabled (`amp.amp_coef = 0.0`). In [k1_config.py](legged_gym/legged_gym/envs/k1/k1_config.py), `dataset.folder` currently points to the separate `8`-joint arm-only dataset ([k1_arms](legged_gym/resources/datasets/k1_arms/) via [retarget_k1_arms.py](legged_gym/legged_gym/scripts/retarget_k1_arms.py)). Training with this `20`-DOF dataset requires updating `dataset.folder`, `dataset.joint_mapping`, `amp.joint_names`, `amp.num_obs` (`40`), and `amp.amp_coef > 0`; re-running [retarget_k1_pyroki.py](legged_gym/legged_gym/scripts/retarget_k1_pyroki.py) offline requires Python `3.12` with `pyroki`, `jax`, and `pybullet`.
+
 ## Internship report
 
 The [working report](docs/run_e_results.md) contains the experimental setup, results tables, and notes for the write-up. The final internship PDF is pending. Its reserved location is `docs/k1-internship-report.pdf`.
@@ -183,6 +202,7 @@ python -m unittest discover -s tests -v
 |---|---|
 | Observations, actions, and rewards | [K1 configuration](legged_gym/legged_gym/envs/k1/k1_config.py) and [environment code](legged_gym/legged_gym/envs/base/legged_robot.py) |
 | Two-policy walk-back & handover | [Walk environment](legged_gym/legged_gym/envs/k1/k1_walk.py), [walk config](legged_gym/legged_gym/envs/k1/k1_walk_config.py), and [state machine](legged_gym/legged_gym/utils/k1_two_policy.py) |
+| Offline motion retargeting (`G1` → `K1`) | [PyRoki script](legged_gym/legged_gym/scripts/retarget_k1_pyroki.py), [collision checker](legged_gym/legged_gym/scripts/k1_self_collision.py), [arm-only script](legged_gym/legged_gym/scripts/retarget_k1_arms.py), and [retarget report](legged_gym/resources/datasets/g1_to_k1_retargeted/retarget_report.json) |
 | Unit tests (`74` tests) | [Tests directory](tests/) (including [2-policy tests](tests/test_k1_two_policy.py) and [target guard tests](tests/test_joint_target_guard.py)) |
 | Reward calibration | [Calibration experiments](evaluation/K1_REWARD_CALIBRATION.md) |
 | Shot lists and benchmark outputs | [Evaluation directory](evaluation/) |
@@ -195,7 +215,7 @@ python -m unittest discover -s tests -v
 3. **Legged Gym & RSL-RL (simulation environment & PPO library):** Nikita Rudin et al., Robotic Systems Lab, ETH Zurich, *Isaac Gym Environments for Legged Robots*, arXiv:2109.11978. [arXiv](https://arxiv.org/abs/2109.11978) · [Project website](https://leggedrobotics.github.io/legged_gym/) · [legged_gym](https://github.com/leggedrobotics/legged_gym) · [rsl_rl](https://github.com/leggedrobotics/rsl_rl)
 4. **NVIDIA Isaac Gym (GPU physics simulation):** [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym)
 5. **RoboCup Humanoid League Rules (2025) (KidSize goal & Size 1 ball specifications):** [Official Rules PDF](https://humanoid.robocup.org/wp-content/uploads/RC-HL-2025-Rules.pdf)
-6. **ICHIRO ITS (internship host team):** [ICHIRO — Institut Teknologi Sepuluh Nopember](https://ichiro-its.org/)
+6. **ICHIRO ITS (internship host team):** [ICHIRO — Institut Teknologi Sepuluh Nopember](https://www.instagram.com/ichiro.its/?hl=en)
 <!-- Add additional papers, Booster K1 hardware/URDF references, or internship citations here. -->
 
 ## Citation and licensing
