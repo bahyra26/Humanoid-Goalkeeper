@@ -24,6 +24,41 @@ Four verified standing saves from the final 2-policy release (`v11_6000 + walk_v
 | ![Booster K1 shifting and reaching up to parry a 10.0 m/s upper-left shot with its extended left arm inside the 2.60 x 1.20 m goal](docs/k1_high_parry.png) | ![Booster K1 deflecting a 12.0 m/s right-side shot with its extended right arm](docs/k1_right_parry.png) |
 | Target `y = +0.55 m, z = 0.95 m` · standing save | Target `y = −0.60 m, z = 0.78 m` · standing save |
 
+### Kicker-POV animated clips (`60 fps`, `1.0x` real-time)
+
+All 15 raw clips below are recorded from behind the kicker (`960x540` single clips, `800x450` continuous sequence) with `v11_6000 + walk_v5_2700`.
+
+#### Standard speed across all 6 goal regions (`7.0–8.5 m/s`)
+
+| `R0` Mid-Left (`7.0 m/s` from `3.4 m`) | `R1` Mid-Right (`7.5 m/s` from `3.5 m`) | `R2` High-Left (`8.5 m/s` from `4.2 m`) |
+|:---:|:---:|:---:|
+| ![R0 Mid-Left 7.0 m/s standard save](docs/footage/01_std_r0_mid_left.webp) | ![R1 Mid-Right 7.5 m/s standard save](docs/footage/02_std_r1_mid_right.webp) | ![R2 High-Left 8.5 m/s standard save](docs/footage/03_std_r2_high_left.webp) |
+| Target `y = +0.35 m, z = 0.55 m` | Target `y = −0.45 m, z = 0.62 m` | Target `y = +0.60 m, z = 0.98 m` |
+
+| `R3` High-Right (`7.8 m/s` from `3.8 m`) | `R4` Low-Left (`7.8 m/s` from `3.7 m`) | `R5` Low-Right (`7.5 m/s` from `3.5 m`) |
+|:---:|:---:|:---:|
+| ![R3 High-Right 7.8 m/s standard save](docs/footage/04_std_r3_high_right.webp) | ![R4 Low-Left 7.8 m/s standard save](docs/footage/05_std_r4_low_left.webp) | ![R5 Low-Right 7.5 m/s standard save](docs/footage/06_std_r5_low_right.webp) |
+| Target `y = −0.45 m, z = 0.85 m` | Target `y = +0.45 m, z = 0.22 m` | Target `y = −0.25 m, z = 0.20 m` |
+
+#### High speed across all 6 goal regions (`10.5–12.0 m/s`)
+
+| `R0` Mid-Left (`10.5 m/s` from `4.2 m`) | `R1` Mid-Right (`11.0 m/s` from `4.5 m`) | `R2` High-Left (`11.0 m/s` from `4.6 m`) |
+|:---:|:---:|:---:|
+| ![R0 Mid-Left 10.5 m/s fast save](docs/footage/07_fast_r0_mid_left.webp) | ![R1 Mid-Right 11.0 m/s fast save](docs/footage/08_fast_r1_mid_right.webp) | ![R2 High-Left 11.0 m/s fast save](docs/footage/09_fast_r2_high_left.webp) |
+| Target `y = +0.35 m, z = 0.55 m` | Target `y = −0.45 m, z = 0.65 m` | Target `y = +0.50 m, z = 0.95 m` |
+
+| `R3` High-Right (`12.0 m/s` from `4.5 m`) | `R4` Low-Left (`12.0 m/s` from `5.0 m`) | `R5` Low-Right (`10.5 m/s` from `4.4 m`) |
+|:---:|:---:|:---:|
+| ![R3 High-Right 12.0 m/s fast save](docs/footage/10_fast_r3_high_right.webp) | ![R4 Low-Left 12.0 m/s fast save](docs/footage/11_fast_r4_low_left.webp) | ![R5 Low-Right 10.5 m/s fast save](docs/footage/12_fast_r5_low_right.webp) |
+| Target `y = −0.65 m, z = 1.12 m` | Target `y = +0.45 m, z = 0.24 m` | Target `y = −0.30 m, z = 0.22 m` |
+
+#### Two-policy walk-back and 5-shot continuous sequence
+
+| 2-Policy Walk-Back (`R2` `11.0 m/s` → `READY_HOME`) | 2-Policy Walk-Back (`R1` `11.0 m/s` → `READY_HOME`) | 5-Shot Continuous (`R4 → R5 → R2 → R3 → R1`) |
+|:---:|:---:|:---:|
+| ![R2 high-left save followed by Policy 2 walk-back to goal center](docs/footage/13_walkback_r2_high_left.webp) | ![R1 mid-right save followed by Policy 2 walk-back to goal center](docs/footage/14_walkback_r1_mid_right.webp) | ![Five consecutive saves with automatic walk-back recovery between shots](docs/footage/15_random_5shots_continuous.webp) |
+| `3.8 s` full save-and-return cycle | `4.8 s` full save-and-return cycle | `7.5 / 7.5 / 11.0 / 7.8 / 11.0 m/s` (`5/5` saves) |
+
 ## Results
 
 **The final demo uses the 2-policy pair `v11_6000 + walk_v5_2700`.** Evaluated under the **`70/30` training-matched shot mix** (`70%` standard `~5.5–9.0 m/s` + `30%` fast `10–14 m/s`, matching `train_fast_ratio = 0.30` across seeds `1, 777, 2026`), `v11_6000` achieves a **`70.23%` weighted save rate** (`82.96%` on `1,080` standard shots with only `7` falls, and `40.53%` across `3,232` fast `10–14 m/s` shots; `+2.37` pp over Run G `landfix_5350` at `67.86%`). On the unweighted equal-band stress test (`25%` standard / `75%` fast `10–14 m/s`, `4,312` on-target shots), it saves **2,206 / 4,312 (`51.16%`, `+130` saves over Run G)**. It enforces `0.0%` upper-body PD target overshoot beyond URDF hard stops (`limit_targets_upper_only = True`), closes the standing five-hole (*kolong*) inner foot gap from `18.7 cm` to `14.6 cm` (`< 15.0 cm` Size 1 ball), and hands off after ball clearance to Policy 2 (`k1_walk_v5/model_2700.pt`) to walk back calmly to goal center. The simulated goal measured `2.60 × 1.20 m`, and the Size 1 ball weighed `200 g` (`15 cm` diameter). [Ball model](legged_gym/resources/gymassets/urdf/ball_k1.urdf) · [Final 3-seed results](evaluation/k1_v11_v13_allseeds_benchmark.json) · [Run G results](evaluation/k1_g_allseeds_benchmark.json) · [Checkpoint manifest](evaluation/FINAL_CHECKPOINTS.json)
