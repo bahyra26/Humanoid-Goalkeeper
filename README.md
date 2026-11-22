@@ -1,6 +1,6 @@
 # Humanoid Goalkeeper for Booster K1
 
-[Internship report](#internship-report) · [Simulation gallery](#simulation-gallery) · [References](#references) · [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [Original paper](https://arxiv.org/abs/2510.18002) · [ICHIRO ITS](https://www.instagram.com/ichiro.its/?hl=en)
+[Technical report](#technical-report) · [Download report (PDF)](docs/Rayyan%20Ahmad-Technical%20Report.pdf) · [Simulation gallery](#simulation-gallery) · [References](#references) · [Upstream project website](https://humanoid-goalkeeper.github.io/Goalkeeper/) · [Original paper](https://arxiv.org/abs/2510.18002) · [ICHIRO ITS](https://www.instagram.com/ichiro.its/?hl=en)
 
 I prepared this adaptation for a research internship with ICHIRO, the humanoid robot soccer team at Institut Teknologi Sepuluh Nopember (ITS). The question behind the experiments was simple: how often can a simulated Booster K1 stop a shot and still finish on its feet?
 
@@ -140,11 +140,9 @@ How to read and use these results:
 - **Self-collision & URDF bounds:** all `4,838` interpolated checks across the six clips report `penetrating_samples = 0` (`direct-parent` pairs excluded), all `.pt` trajectories pass URDF position and velocity bounds, and `MotionLib` 20-DOF loading passes in [test_k1_arm_amp.py](tests/test_k1_arm_amp.py) (`test_pyroki_urdf_clearance_at_240_hz` requires PyBullet offline). Because retargeting is kinematic in the pelvis frame, `0` penetration does not verify whole-body CoM balance on ground contact.
 - **Current training status (`amp_coef = 0.0`):** `v11_6000 + walk_v5_2700` runs with AMP disabled (`amp.amp_coef = 0.0`). In [k1_config.py](legged_gym/legged_gym/envs/k1/k1_config.py), `dataset.folder` currently points to the separate `8`-joint arm-only dataset ([k1_arms](legged_gym/resources/datasets/k1_arms/) via [retarget_k1_arms.py](legged_gym/legged_gym/scripts/retarget_k1_arms.py)). Training with this `20`-DOF dataset requires updating `dataset.folder`, `dataset.joint_mapping`, `amp.joint_names`, `amp.num_obs` (`40`), and `amp.amp_coef > 0`; re-running [retarget_k1_pyroki.py](legged_gym/legged_gym/scripts/retarget_k1_pyroki.py) offline requires Python `3.12` with `pyroki`, `jax`, and `pybullet`.
 
-## Internship report
+## Technical report
 
-The [working report](docs/run_e_results.md) contains the experimental setup, results tables, and notes for the write-up. The final internship PDF is pending. Its reserved location is `docs/k1-internship-report.pdf`.
-<!-- When the final file is available, add [Download the internship report (PDF)](docs/k1-internship-report.pdf) to the opening link row. -->
-<!-- Maintainer upload shortcut: https://github.com/bahyra26/Humanoid-Goalkeeper/upload/main/docs -->
+The 5-page IEEE technical report (*Design and Evaluation of a Humanoid Goalkeeper for Shot Blocking in Simulation*, developed during the ICHIRO ITS research internship) documents the Booster K1 goalkeeper architecture, the `4,312`-shot 3-seed and per-region benchmarks, two-policy walk-back control, `G1` → `K1` retargeting (`retarget_k1_arms.py` and `retarget_k1_pyroki.py`), `15` Kicker-POV demonstration clips, a `10 m/s` vs `14 m/s` upper-corner timing trace (`~60 ms` hand arrival lag), and simulation/hardware limitations. [Download technical report (PDF)](docs/Rayyan%20Ahmad-Technical%20Report.pdf) · [Working notes and Run A–E ablation tables](docs/run_e_results.md)
 
 ## Installation
 
@@ -206,6 +204,7 @@ python -m unittest discover -s tests -v
 | Unit tests (`74` tests) | [Tests directory](tests/) (including [2-policy tests](tests/test_k1_two_policy.py) and [target guard tests](tests/test_joint_target_guard.py)) |
 | Reward calibration | [Calibration experiments](evaluation/K1_REWARD_CALIBRATION.md) |
 | Shot lists and benchmark outputs | [Evaluation directory](evaluation/) |
+| Technical report & working notes | [Technical report (PDF)](docs/Rayyan%20Ahmad-Technical%20Report.pdf) and [working report](docs/run_e_results.md) |
 | Underlying simulation and training libraries | [legged_gym](legged_gym/README.md) and [rsl_rl](rsl_rl/README.md) |
 
 ## References
